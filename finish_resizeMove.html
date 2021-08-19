@@ -1,0 +1,342 @@
+<html>
+    <head>
+        <script src="js/jquery-3.5.1.min.js"></script>
+        <script src="js/fabric.min.js"></script>
+        <style>
+            body{
+                overflow: hidden;
+            }
+            .canvas {
+                box-sizing: border-box;
+                border: 1px solid black;
+            }
+            #infoDiv{
+                position: relative;
+                width: 100%;
+                height: 50%;
+                overflow: auto;
+            }
+            #imgSplite {
+                position: relative;
+                width: 100%;
+                height: 50%;
+                overflow: auto;
+            }
+            #imgSplite > img {
+                margin: 5px;
+            }
+            #rightDiv {
+                position: relative;
+                width: calc(100% - 500px);
+                height: 90vh;
+                float: right;
+                overflow: auto;
+            }
+            #leftDiv {
+                position: relative;
+                width: 500px;
+                height: 100vh;
+                float: left;
+            }
+            #resultDiv{
+                position: relative;
+                width: 500px;
+                height: 500px;
+                overflow: hidden;
+            }
+            #tempDiv {
+                position: relative;
+                width: 500px;
+                height: 500px;
+                overflow: auto;
+            }
+            #myCanvas {
+                position: absolute;
+                top: 0px;
+                left: 0px;
+                /* visibility: hidden; */
+            }
+            #myCanvasHigh {
+                position: absolute;
+                top: 500px;
+                left: 0px;
+                /* visibility: hidden; */
+            }
+        </style>
+    </head>
+    <body>
+        <img id="Abs" src="" />
+        <div id="leftDiv">
+            <div id="resultDiv">
+                <canvas id="canvas-tools" class="canvas" width="500" height="500"></canvas>
+            </div>
+            <div id="tempDiv">
+                <canvas id="myCanvas" width="500" height="500" >
+                    Your browser does not support the HTML5 canvas tag.
+                </canvas>
+                <canvas id="myCanvasHigh" width="500" height="500" >
+                    Your browser does not support the HTML5 canvas tag.
+                </canvas>
+            </div>
+        </div>
+        <div id="rightDiv">
+            <div id="infoDiv"></div>
+            <div id="imgSplite">
+                <div>
+                    <button onclick="resize()">resize</button>
+                    <button onclick="clearInfo()">clearInfo</button>
+                </div>
+            </div>
+        </div>
+    </body>
+    <script>
+function printInfo (str){
+    document.getElementById('infoDiv').innerHTML += '<div>' + str + '</div>'
+}
+function clearInfo (str){
+    document.getElementById('infoDiv').innerHTML = ''
+}
+
+
+var min = 99;
+var max = 999999;
+var polygonMode = true;
+var pointArray = new Array();
+var lineArray = new Array();
+var activeLine;
+var activeShape = false;
+var canvas
+var tt
+
+function resize(){
+    printInfo(JSON.stringify(leftTopCoord()) + ',zoom:' + canvas.getZoom())
+    renderCanvasHigh(leftTopCoord(), canvas.getZoom());
+}
+
+var picLen = 16, picRow = 4, imgAryCompelete = []
+var imgAry = new Array(picLen)
+var currentResolution = 0
+    var initCanvas = function () {
+        canvas = window._canvas = new fabric.Canvas('canvas-tools');
+        // canvas.setWidth($(window).width());
+        // canvas.setHeight($(window).height());
+        //canvas.selection = false;
+        canvas.on('mouse:down', function (options) {
+            var evt = options.e;
+            if (evt.altKey === true) {
+                this.isDragging = true;
+                this.selection = false;
+                this.lastPosX = evt.clientX;
+                this.lastPosY = evt.clientY;
+            }
+        });
+        canvas.on('mouse:up', function (options) {
+            this.isDragging = false;
+            this.selection = true;
+        });
+        canvas.on('mouse:move', function (options) {
+            if (this.isDragging) {
+                var e = options.e;
+                var vpt = this.viewportTransform;
+                vpt[4] += e.clientX - this.lastPosX;
+                vpt[5] += e.clientY - this.lastPosY;
+                // this.requestRenderAll();
+                // updateMiniMapVP();
+                this.lastPosX = e.clientX;
+                this.lastPosY = e.clientY;
+                clearTimeout(tt)
+                renderCanvas()
+                tt = setTimeout(function(){
+                    // console.log('center :', CenterCoord())
+                    // if(canvas.getZoom() > 2) {
+                        renderCanvasHigh(leftTopCoord(), canvas.getZoom());
+                    // } else {
+                    //     renderCanvas(leftTopCoord(), canvas.getZoom());
+                    // }
+                    // console.log('m lefttop:', leftTopCoord().x, leftTopCoord().y)
+                },100)
+            }
+            canvas.renderAll();
+        });
+        var lastZoom = 1
+        canvas.on('mouse:wheel', function (opt) {
+            var delta = opt.e.deltaY;
+            var zoom = canvas.getZoom();
+            zoom *= 0.999 ** delta;
+            if (zoom > 20) zoom = 20;
+            if (zoom < 0.01) zoom = 0.01;
+            canvas.setZoom(zoom);
+            // 滾動切換 圖片解析度
+            // if (zoom > 10 && currentResolution === 0) {
+            //     // 讀取高解析度
+            //     highResolutionLoad()
+            //     currentResolution = 1
+            // }
+            // if (zoom <= 10 && currentResolution === 1) {
+            //     // 讀取低解析度
+            //     lowResolutionLoad()
+            //     currentResolution = 0
+            // }
+            // updateMiniMapVP();
+            opt.e.preventDefault();
+            opt.e.stopPropagation();
+            printInfo ('zoom:'+zoom)
+            var change = lastZoom > 2 && zoom <=2
+            lastZoom = zoom
+            clearTimeout(tt)
+                // renderCanvas()
+                tt = setTimeout(function(){
+                    // console.log('center :', CenterCoord())
+                    // if(zoom > 2) {
+                        renderCanvasHigh(leftTopCoord(), zoom);
+                    // } 
+                    if (change) {
+                        renderCanvas(leftTopCoord(), canvas.getZoom());
+                    }
+                    // else {
+                    //     renderCanvas(leftTopCoord(), canvas.getZoom());
+                    // }
+                    // console.log('m lefttop:', leftTopCoord().x, leftTopCoord().y)
+                },100)
+        });
+
+        // 預設讀取低解析度
+        lowResolutionLoad()
+
+
+    };
+
+    function lowResolutionLoad () {
+        for(var i = 0; i < picLen; i++){
+            imgAryCompelete[i] = false
+            var img = new Image();
+            img.comp = false;
+            img.onload = function(){
+                this.comp = true;
+                renderCanvas()
+            };
+            img.src = "/spliteImg/"+i+".jpg";
+            // highResolution
+            // imgAry.push(img)
+            imgAry[i] = img
+            document.getElementById('imgSplite').appendChild(img)
+        }
+    }
+    function highResolutionLoad () {
+        for(var i = 0; i < picLen; i++){
+            imgAryCompelete[i] = false
+            var img = new Image();
+            img.comp = false;
+            img.onload = function(){
+                this.comp = true;
+                renderCanvas()
+            };
+            img.src = "/spliteImg/highResolution/"+i+".jpg";
+            // highResolution
+            // imgAry.push(img)
+            imgAry[i] = img
+            document.getElementById('imgSplite').appendChild(img)
+        }
+    }
+
+    function renderCanvas(coord, zoom){
+        console.log('low', coord, zoom)
+        if(!zoom) {zoom = 1}
+        var canvasA = document.getElementById("myCanvas");
+        var ctx = canvasA.getContext("2d");
+        var img = document.getElementById("scream");
+        ctx.fillStyle = "red";
+        ctx.strokeStyle = "red";
+        ctx.clearRect(0, 0, canvasA.width, canvasA.height);
+        ctx.fillRect(0, 0, canvasA.width, canvasA.height);
+        for(var i = 0; i < imgAry.length; i++) {
+            // console.log((i%picRow) * 100, Math.floor(i/picRow)*100)
+            // ctx.drawImage(imgAry[i], (i%picRow) * 100, Math.floor(i/picRow)*100, 100, 100);
+            var t = Math.floor(i/picRow)*100
+            if (imgAry[i].comp) {
+                // 繪製暫時畫布
+                // ctx.drawImage(圖片, left, top, width, height)
+                ctx.drawImage(imgAry[i], (i%picRow) * 100, t, 100, 100);
+            }
+        }
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(canvasA.width, canvasA.height);
+        ctx.stroke();
+        dataURL=canvasA.toDataURL('image/jpeg');
+        // 將圖繪製到 真實畫布
+        canvas.setBackgroundImage(dataURL, canvas.renderAll.bind(canvas), {
+            originX: 'left',
+            originY: 'top',
+            left: 0,
+            top: 0,
+            scaleX: 1,
+            scaleY: 1
+        });
+        // renderCanvasHigh({x:0,y:0}, zoom);
+    }
+    function renderCanvasHigh(coord, zoom){
+        console.log('high', coord, zoom)
+        if (!zoom) {zoom = 3}
+        var canvasA = document.getElementById("myCanvasHigh");
+        var ctx = canvasA.getContext("2d");
+        ctx.fillStyle = "green";
+        ctx.strokeStyle = "green";
+        ctx.clearRect(0, 0, canvasA.width, canvasA.height);
+        ctx.fillRect(0, 0, canvasA.width, canvasA.height);
+        // var img = document.getElementById("scream");
+        // 真實畫布中心座標
+        // 平移top left
+        // console.log('', CenterCoord())
+        for(var i = 0; i < imgAry.length; i++) {
+            // console.log((i%picRow) * 100, Math.floor(i/picRow)*100)
+            // ctx.drawImage(imgAry[i], (i%picRow) * 100, Math.floor(i/picRow)*100, 100, 100);
+            var t = Math.floor(i/picRow)*100
+            if (imgAry[i].comp) {
+                // 繪製暫時畫布
+                // ctx.drawImage(圖片, left, top, width, height)
+                // ctx.drawImage(imgAry[i], (i%picRow) * 300*zoom, t, 300, 300);
+                // console.log('high', (i%picRow) * 100*zoom - coord.x, t - coord.y)
+                ctx.drawImage(imgAry[i], ((i%picRow) * 100 - coord.x)*zoom, (t - coord.y)*zoom, 100*zoom, 100*zoom);
+            }
+        }
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(canvasA.width, canvasA.height);
+        ctx.stroke();
+        dataURL=canvasA.toDataURL('image/jpeg');
+        // 將圖繪製到 真實畫布
+        if (zoom < 2) { return false}
+        canvas.setBackgroundImage(dataURL, canvas.renderAll.bind(canvas), {
+            originX: 'left',
+            originY: 'top',
+            left: coord.x,
+            top: coord.y,
+            scaleX: 1/zoom,
+            scaleY: 1/zoom
+        });
+    }
+
+    
+    function CenterCoord(){
+        var zoom=canvas.getZoom()
+        return{
+            x:fabric.util.invertTransform(canvas.viewportTransform)[4]+(canvas.width/zoom)/2,
+            y:fabric.util.invertTransform(canvas.viewportTransform)[5]+(canvas.height/zoom)/2
+        }
+    }
+    function leftTopCoord(){
+        var zoom=canvas.getZoom()
+        return{
+            x:fabric.util.invertTransform(canvas.viewportTransform)[4],
+            y:fabric.util.invertTransform(canvas.viewportTransform)[5]
+        }
+    }
+
+
+    initCanvas()
+    
+
+
+    </script>
+</html>
