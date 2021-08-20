@@ -68,6 +68,7 @@
     <body>
         <img id="Abs" src="" />
         <div id="leftDiv">
+            <canvas id="minimapCanvas" width="500" height="500"></canvas>
             <div id="resultDiv">
                 <canvas id="canvas-tools" class="canvas" width="500" height="500"></canvas>
             </div>
@@ -168,7 +169,7 @@ function matrixAdd(A,B){
 
 function pointRotate(matrix, point){
     return [
-        
+
     ]
 }
 
@@ -308,125 +309,6 @@ var currentResolution = 0
 
     };
 
-    function lowResolutionLoad () {
-        var img = new Image();
-        img.comp = false;
-        img.onload = function(){
-            this.comp = true;
-            renderCanvas()
-        };
-        img.src = "/spliteImg/ndpi/a.jpg";
-        imgAryOrigin[0] = img
-        document.getElementById('imgSplite').appendChild(img)
-        for(var i = 0; i < picLen; i++){
-            imgAryCompelete[i] = false
-            img = new Image();
-            img.comp = false;
-            img.onload = function(){
-                this.comp = true;
-                renderCanvas()
-            };
-            img.src = "/spliteImg/ndpi/"+i+".jpg";
-            // highResolution
-            // imgAry.push(img)
-            imgAry[i] = img
-            document.getElementById('imgSplite').appendChild(img)
-        }
-    }
-
-
-    function renderCanvas(coord, zoom){
-        console.log('low', coord, zoom, canvas.viewportTransform)
-        if(!zoom) {zoom = 1}
-        var canvasA = document.getElementById("myCanvas");
-        var ctx = canvasA.getContext("2d");
-        var img = document.getElementById("scream");
-        ctx.fillStyle = "red";
-        ctx.strokeStyle = "red";
-        ctx.clearRect(0, 0, canvasA.width, canvasA.height);
-        ctx.fillRect(0, 0, canvasA.width, canvasA.height);
-        // for(var i = 0; i < imgAry.length; i++) {
-        //     // console.log((i%picRow) * 100, Math.floor(i/picRow)*100)
-        //     // ctx.drawImage(imgAry[i], (i%picRow) * 100, Math.floor(i/picRow)*100, 100, 100);
-        //     var t = Math.floor(i/picRow)*100
-        //     if (imgAry[i].comp) {
-        //         // 繪製暫時畫布
-        //         // ctx.drawImage(圖片, left, top, width, height)
-        //         ctx.drawImage(imgAry[i], (i%picRow) * 100, t, 100, 100);
-        //     }
-        // }
-        if (imgAryOrigin[0].comp) {
-            console.log('***', imgAryOrigin[0].width)
-            var scaleX = 500/imgAryOrigin[0].width
-            var scaley = 500/imgAryOrigin[0].height
-            var w, h
-            w = imgAryOrigin[0].width / 6
-            h = imgAryOrigin[0].height / 6
-            ctx.drawImage(imgAryOrigin[0], 0, 0, w, h);
-        }
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(canvasA.width, canvasA.height);
-        ctx.stroke();
-        dataURL=canvasA.toDataURL('image/jpeg');
-        // 將圖繪製到 真實畫布
-        canvas.setBackgroundImage(dataURL, canvas.renderAll.bind(canvas), {
-            originX: 'left',
-            originY: 'top',
-            left: 0,
-            top: 0,
-            scaleX: 1,
-            scaleY: 1
-        });
-        canvas.renderAll();
-        // renderCanvasHigh({x:0,y:0}, zoom);
-    }
-
-    function renderCanvasHigh(coord, zoom){
-        console.log('high', coord, zoom, canvas.viewportTransform)
-        var ss = 4 * 6
-        if (!zoom) {zoom = 3}
-        var canvasA = document.getElementById("myCanvasHigh");
-        var ctx = canvasA.getContext("2d");
-        ctx.fillStyle = "green";
-        ctx.strokeStyle = "green";
-        ctx.clearRect(0, 0, canvasA.width, canvasA.height);
-        ctx.fillRect(0, 0, canvasA.width, canvasA.height);
-        // var img = document.getElementById("scream");
-        // 真實畫布中心座標
-        // 平移top left
-        // console.log('', CenterCoord())
-        for(var i = 0; i < imgAry.length; i++) {
-            // console.log((i%picRow) * 100, Math.floor(i/picRow)*100)
-            // ctx.drawImage(imgAry[i], (i%picRow) * 100, Math.floor(i/picRow)*100, 100, 100);
-            var t = Math.floor(i/picRow) * 3000
-            if (imgAry[i].comp) {
-                // 繪製暫時畫布
-                // ctx.drawImage(圖片, left, top, width, height)
-                // ctx.drawImage(imgAry[i], (i%picRow) * 300*zoom, t, 300, 300);
-                // console.log('high', (i%picRow) * 100*zoom - coord.x, t - coord.y)
-                // ctx.drawImage(imgAry[i], ((i%picRow) * 100 - coord.x)*zoom/ss, (t - coord.y)*zoom/ss, 100*zoom/ss, 100*zoom/ss);
-                // ctx.drawImage(imgAry[i], ((i%picRow) * 3000 - coord.x)*zoom/ss, (t - coord.y)*zoom/ss, 3000*zoom/ss, 3000*zoom/ss);
-                ctx.drawImage(imgAry[i], ((i%picRow) * 3000)*zoom/ss - coord.x*zoom, (t)*zoom/ss - coord.y*zoom, 3000*zoom/ss, 3000*zoom/ss);
-            }
-        }
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(canvasA.width, canvasA.height);
-        ctx.stroke();
-        dataURL=canvasA.toDataURL('image/jpeg');
-        // 將圖繪製到 真實畫布
-        if (zoom < 2) { return false}
-        canvas.setBackgroundImage(dataURL, canvas.renderAll.bind(canvas), {
-            originX: 'left',
-            originY: 'top',
-            left: coord.x,
-            top: coord.y,
-            scaleX: 1/zoom,
-            scaleY: 1/zoom
-        });
-        canvas.renderAll();
-    }
 
     function CenterCoord(){
         var zoom=canvas.getZoom()

@@ -208,22 +208,21 @@ var currentResolution = 0
                 clearTimeout(tt)
                 // renderCanvas()
                 tt = setTimeout(function(){
-                    /*var levelInfo = window.imgInfo.partition.find(function(item){
+                    var levelInfo = window.imgInfo.partition.find(function(item){
                         return item.scaleRate < zoom || item.scaleRate === 1
                     })
-                    console.log('setTime out ll*', levelInfo.level, zoom)
                     for(var i in window.imgInfo.partition) {
                         console.log('i', i, window.imgInfo.partition[i])
                         if(window.imgInfo.partition[i] && window.imglevel[parseInt(window.imgInfo.partition[i].level)]){
                             drawTempCanvasByLevel(window.imgInfo.partition[i], leftTopCoord(), zoom, false)
                         }
-                    }*/
-                    var levelInfo = window.imgInfo.partition.find(function(item){
+                    }
+                    /*var levelInfo = window.imgInfo.partition.find(function(item){
                         return item.scaleRate < zoom || item.scaleRate === 1
                     })
                     if (window.imglevel[parseInt(levelInfo.level)]) {
                         drawTempCanvasByLevel(levelInfo, leftTopCoord(), zoom, true)
-                    }
+                    }*/
                 },100)
             }
             canvas.renderAll();
@@ -257,25 +256,21 @@ var currentResolution = 0
             // renderCanvas()
             tt = setTimeout(function(){
                 // console.log('center :', CenterCoord())
-                /*var levelInfo = window.imgInfo.partition.find(function(item){
+                var levelInfo = window.imgInfo.partition.find(function(item){
                     return item.scaleRate < zoom || item.scaleRate === 1
                 })
-                console.log('setTime out ll*', levelInfo.level, zoom)
-                // if (window.imglevel[parseInt(levelInfo.level)]) {
-                //     drawTempCanvasByLevel(levelInfo, leftTopCoord(), zoom, true)
-                // }
                 for(var i in window.imgInfo.partition) {
                     console.log('i', i, window.imgInfo.partition[i])
                     if(window.imgInfo.partition[i] && window.imglevel[parseInt(window.imgInfo.partition[i].level)]){
                         drawTempCanvasByLevel(window.imgInfo.partition[i], leftTopCoord(), zoom, false)
                     }
-                }*/
-                var levelInfo = window.imgInfo.partition.find(function(item){
+                }
+                /*var levelInfo = window.imgInfo.partition.find(function(item){
                     return item.scaleRate < zoom || item.scaleRate === 1
                 })
                 if (window.imglevel[parseInt(levelInfo.level)]) {
                     drawTempCanvasByLevel(levelInfo, leftTopCoord(), zoom, true)
-                }
+                }*/
                 // renderCanvasByLevel(levelInfo, leftTopCoord(), zoom)
                 // if (change) {
                 //     renderCanvas(leftTopCoord(), canvas.getZoom());

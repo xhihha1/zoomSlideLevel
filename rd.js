@@ -35,7 +35,7 @@ function loadInfo (){
 function loadImgByLevel (levelInfo){
   var count = levelInfo.count;
   var level = parseInt(levelInfo.level);
-  if(level < 1) {return false}
+  if(level < 4 || level > 6) {return false}
   var row = parseInt(levelInfo.row);
   var column = parseInt(levelInfo.column);
   var imgAry = new Array(count);

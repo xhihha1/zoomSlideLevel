@@ -77,7 +77,7 @@ function loadImgByLevel (levelInfo){
 function loadImgByLevelAndCanvasArea (levelInfo, coord, zoom, canvasArea){
   var count = levelInfo.count;
   var level = parseInt(levelInfo.level);
-  console.log('level**', level)
+  // console.log('level**', level)
   var scaleRate = levelInfo.scaleRate;
   // if(level < 3) {return false}
   var row = parseInt(levelInfo.row);
@@ -127,7 +127,7 @@ function loadImgByLevelAndCanvasArea (levelInfo, coord, zoom, canvasArea){
         if (imgAry[idx]) {
           // 已下載過
           // drawTempCanvasByLevel(levelInfo, coord, zoom, true)
-          console.log('downloaded', level+'_'+i+'_'+j)
+          // console.log('downloaded', level+'_'+i+'_'+j)
         } else {
           // 需下載圖片
           var img = new Image();
@@ -141,7 +141,7 @@ function loadImgByLevelAndCanvasArea (levelInfo, coord, zoom, canvasArea){
           // img.src = "/spliteImg/test/CMU-1_"+level+'_'+i+'_'+j+".jpg";
           img.src = "/spliteImg/test2/2021-01-26 16.08.13_"+level+'_'+i+'_'+j+".jpg";
           imgAry[i * (column) + j] = img
-          console.log('downloading...', level+'_'+i+'_'+j)
+          // console.log('downloading...', level+'_'+i+'_'+j)
         }
       }
     }
@@ -207,16 +207,25 @@ function drawTempCanvasByLevel(levelInfo, coord, zoom, changeView){
         // h = imgAry[i].height / 6
         // why 2?
         var rate = Math.ceil((imgAry[i].width / scaleRate)/canvasTemplate.width);
+        rate = (imgAry[i].width / scaleRate)/canvasTemplate.width;
         w = imgAry[i].width / scaleRate / rate *zoom; // why 2 ?
         h = imgAry[i].height / scaleRate / rate *zoom; // why 2 ?
         x = -1 * coord.x*zoom
         y = -1 * coord.y*zoom
+        console.log('x:', x, coord.x, ' y:', y, coord.y, 'zoom', zoom)
         ctx.drawImage(imgAry[i], x, y, w, h);
         ctx.font = "10px Arial";
         ctx.fillStyle = '#F00';
         ctx.fillText(imgAry[i].n, 0, 10);
       } else {
         // var area = { x: coord.x, y: coord.y, w: canvasTemplate.width*zoom, h: canvasTemplate.height*zoom, zoom:zoom}
+        ss = canvasTemplate.scaleRate * Math.round(3000 / canvasTemplate.width)
+        ss = canvasTemplate.scaleRate * Math.round(3000 / canvasTemplate.width)
+        var rate = Math.ceil((imgAry[i].width / canvasTemplate.scaleRate)/canvasTemplate.width);
+        rate = (imgAry[i].width / scaleRate)/canvasTemplate.width;
+        w = imgAry[i].width / canvasTemplate.scaleRate / rate *zoom; // why 2 ?
+        h = imgAry[i].height / canvasTemplate.scaleRate / rate *zoom; // why 2 ?
+        t = (i/column) * 3000
         var area = { x: 0, y: 0, w: 500, h: 500}
         // window.area = area
         var areaB = { 
@@ -225,24 +234,27 @@ function drawTempCanvasByLevel(levelInfo, coord, zoom, changeView){
           w: 3000*zoom/ss,
           h: 3000*zoom/ss
         }
-        if(level === 4) {
-          // console.log('----------------------------------------')
-          // console.log(imgAry[i].n, 
-          //   ' x:', ((i%(column)) * 3000)*zoom/ss - coord.x*zoom,
-          //   ' y:',(t)*zoom/ss - coord.y*zoom,
-          //   ' w:',3000*zoom/ss,
-          //   ' h:',3000*zoom/ss,
-          //   ' intersect:', boundaryIntersect(areaB, area)
-          // )
-          // console.log('----------------------------------------')
+        var areaB = { 
+          x: ((i%(column)) * 3000)/canvasTemplate.scaleRate - coord.x*zoom,
+          y: (t) / canvasTemplate.scaleRate - coord.y*zoom,
+          w: w,
+          h: h
         }
         if (boundaryIntersect(areaB, area)) {
-          ctx.drawImage(
+          /* ctx.drawImage(
             imgAry[i],
             ((i%(column)) * 3000)*zoom/ss - coord.x*zoom,
             (t)*zoom/ss - coord.y*zoom,
             3000*zoom/ss,
-            3000*zoom/ss);
+            3000*zoom/ss
+          ); */
+          ctx.drawImage(
+            imgAry[i],
+            ((i%(column)) * 3000)*zoom/ss - coord.x*zoom,
+            (t)*zoom/ss - coord.y*zoom,
+            w,
+            h
+          );
         }
         ctx.font = "10px Arial";
         ctx.fillStyle = '#F00';
@@ -283,6 +295,7 @@ function renderCanvasByLevel(levelInfo, coord, zoom){
       scaleY: 1 / zoom
     });
     canvas.renderAll();
+    drawMiniMap();
   }
 }
 
@@ -311,4 +324,42 @@ function boundaryIntersect(areaA, areaB) {
   }
   return xIntersect & yIntersect
 }
+
+function drawMiniMap () {
+  const that = this
+  // that.ndpi.baselevel
+
+  const canvasMinimap = document.getElementById('minimapCanvas')
+  const ctx = canvasMinimap.getContext('2d')
+  canvasMinimap.width = 500
+  canvasMinimap.height = 500
+  const level = window.baselevel.level
+  const imgAry = window.imglevel[parseInt(level)].imgAry
+  const scaleRate = 1
+  const zoom = canvas.getZoom() ? canvas.getZoom() : 1
+  const rate = Math.ceil((imgAry[0].width / scaleRate) / canvasMinimap.width)
+  ctx.clearRect(0, 0, canvasMinimap.width, canvasMinimap.height)
+  ctx.strokeStyle = '#FF0000'
+  ctx.lineWidth = 1
+  ctx.drawImage(
+    imgAry[0],
+    0,
+    0,
+    imgAry[0].width / scaleRate / rate,
+    imgAry[0].height / scaleRate / rate
+  )
+  ctx.beginPath()
+  const x = that.leftTopCoord().x
+  // const x = 0 - edit.canvasView.viewportTransform[5] * totalRatio / edit.canvasView.getZoom()
+  const y = that.leftTopCoord().y
+  // const y = 0 - edit.canvasView.viewportTransform[4] * totalRatio / edit.canvasView.getZoom()
+  // const w = canvasMinimap.width / scaleRate / zoom
+  // const h = canvasMinimap.height / scaleRate / zoom
+  const w = canvasMinimap.width / zoom
+  const h = canvasMinimap.height / zoom
+  console.log('x:', x, that.leftTopCoord().x, ' y:', y, that.leftTopCoord().y, 'zoom', zoom, 'minimap')
+  ctx.rect(x, y, w, h)
+  ctx.stroke()
+}
+
 // loadInfo()
