@@ -2,6 +2,7 @@
 window.imgInfo 
 window.imglevel
 window.baselevel
+window.sliceSize = 1024
 
 function loadInfo (){
  
@@ -35,7 +36,7 @@ function loadInfo (){
 function loadImgByLevel (levelInfo){
   var count = levelInfo.count;
   var level = parseInt(levelInfo.level);
-  if(level < 4 || level > 6) {return false}
+  if(level < 5 || level > 7) {return false}
   var row = parseInt(levelInfo.row);
   var column = parseInt(levelInfo.column);
   var imgAry = new Array(count);
@@ -91,14 +92,14 @@ function drawTempCanvasByLevel(levelInfo, coord, zoom, changeView){
   canvasTemplate.scaleRate = scaleRate
   canvasTemplate.width = 500
   canvasTemplate.height = 500
-  var ss = canvasTemplate.scaleRate * Math.round(3000 / canvasTemplate.width)
+  var ss = canvasTemplate.scaleRate * Math.round(window.sliceSize / canvasTemplate.width)
   // console.log('level:',level, 'ss:',ss)
   var imgAry = window.imglevel[parseInt(level)].imgAry
-  
+  var imgAryBaseWidth = window.imglevel[parseInt(window.baselevel.level)].imgAry[0].width
   var ctx = canvasTemplate.getContext("2d");
   for(var i = 0; i < imgAry.length; i++) {
     // var t = Math.floor(i/(row)) * 3000
-    var t = Math.floor(i/(column)) * 3000
+    var t = Math.floor(i/(column)) * window.sliceSize
     if (imgAry[i] && imgAry[i].comp) {
       
       // 繪製暫時畫布
@@ -107,12 +108,12 @@ function drawTempCanvasByLevel(levelInfo, coord, zoom, changeView){
         console.log('****************************************')
         console.log(imgAry[i].n, '----', level, zoom,
         'i',i,' row:',row,' column:',column, ' ss:', ss,'scaleRate',canvasTemplate.scaleRate,
-        'Math.round(3000 / canvasTemplate.width)', Math.round(3000 / canvasTemplate.width),
-        ((i%(column)) * 3000)*zoom/ss - coord.x*zoom,
+        'Math.round(window.sliceSize / canvasTemplate.width)', Math.round(window.sliceSize / canvasTemplate.width),
+        ((i%(column)) * window.sliceSize)*zoom/ss - coord.x*zoom,
         (t)*zoom/ss - coord.y*zoom,
-        3000*zoom/ss,
-        3000*zoom/ss)
-        console.log('****************************************')
+        window.sliceSize*zoom/ss,
+        window.sliceSize*zoom/ss)
+        console.log('****************************************79')
       }
       // ctx.drawImage(
       //   imgAry[i],
@@ -125,7 +126,8 @@ function drawTempCanvasByLevel(levelInfo, coord, zoom, changeView){
         // w = imgAry[i].width / 6
         // h = imgAry[i].height / 6
         // why 2?
-        var rate = Math.ceil((imgAry[i].width / scaleRate)/canvasTemplate.width);
+        var rate = Math.ceil(imgAryBaseWidth / canvasTemplate.width);
+        // var rate = Math.ceil((imgAry[i].width / scaleRate)/canvasTemplate.width);
         w = imgAry[i].width / scaleRate / rate *zoom; // why 2 ?
         h = imgAry[i].height / scaleRate / rate *zoom; // why 2 ?
         x = -1 * coord.x*zoom
@@ -135,16 +137,24 @@ function drawTempCanvasByLevel(levelInfo, coord, zoom, changeView){
         ctx.fillStyle = '#F00';
         ctx.fillText(imgAry[i].n, 0, 10);
       } else {
+        var rate = Math.ceil(imgAryBaseWidth / canvasTemplate.width);
+        // var ss = canvasTemplate.scaleRate * Math.round(3000 / canvasTemplate.width)
         ctx.drawImage(
           imgAry[i],
-          ((i%(column)) * 3000)*zoom/ss - coord.x*zoom,
-          (t)*zoom/ss - coord.y*zoom,
-          3000*zoom/ss,
-          3000*zoom/ss);
+          ((i%(column)) * window.sliceSize) / scaleRate / rate * zoom - coord.x * zoom,
+          (t)*zoom / scaleRate /rate - coord.y*zoom,
+          window.sliceSize / scaleRate/rate*zoom,
+          window.sliceSize / scaleRate/rate*zoom );
+        // ctx.drawImage(
+        //   imgAry[i],
+        //   ((i%(column)) * 3000)*zoom/ss - coord.x*zoom,
+        //   (t)*zoom/ss - coord.y*zoom,
+        //   3000*zoom/ss,
+        //   3000*zoom/ss);
         ctx.font = "10px Arial";
         ctx.fillStyle = '#F00';
         // ctx.fillText(imgAry[i].n, ((i%(row)) * 3000)*zoom/ss - coord.x*zoom, (t)*zoom/ss - coord.y*zoom + 10);
-        ctx.fillText(imgAry[i].n, ((i%(column)) * 3000)*zoom/ss - coord.x*zoom, (t)*zoom/ss - coord.y*zoom + 10);
+        ctx.fillText(imgAry[i].n, ((i%(column)) * window.sliceSize)*zoom/ss - coord.x*zoom, (t)*zoom/ss - coord.y*zoom + 10);
       }
       if (level === parseInt(window.baselevel.level) || changeView) {
         console.log('ll', level, zoom)
@@ -161,7 +171,7 @@ function renderCanvasByLevel(levelInfo, coord, zoom){
   if (!zoom) {zoom = scaleRate}
   if (!coord) {coord = {x:0,y:0}}
   var canvasTemplate = document.getElementById('level_' + level);
-  var ss = scaleRate * Math.round(3000 / canvasTemplate.width)
+  var ss = scaleRate * Math.round(window.sliceSize / canvasTemplate.width)
   if (canvasTemplate) {
     dataURL=canvasTemplate.toDataURL('image/jpeg');
     // 將圖繪製到 真實畫布

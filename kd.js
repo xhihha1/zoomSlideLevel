@@ -2,6 +2,7 @@
 window.imgInfo 
 window.imglevel
 window.baselevel
+window.sliceSize = 3000
 
 function loadInfo (){
  
@@ -30,9 +31,16 @@ function loadInfo (){
     var zoom = canvas.getZoom();
     var area = { x: 0, y: 0, w: 500, h: 500}
     loadImgByLevelAndCanvasArea(window.baselevel, leftTopCoord(), zoom, area)
+    // for(var i = 0 ; i < window.imgInfo.partition.length; i++) {
+    //   // loadImgByLevel (window.imgInfo.partition[i])
+    //   if(window.imgInfo.partition[i].level >3) {
+    //     loadImgByLevelAndCanvasArea(window.imgInfo.partition[i], leftTopCoord(), zoom, area)
+    //   }
+    // }
   });
   // oReq.open("GET", "./spliteImg/test/CMU-1_slice_info_simple.json");
-  oReq.open("GET", "./spliteImg/test2/2021-01-26 16.08.13_slice_info_simple.json");
+  oReq.open("GET", "./spliteImg/1622/CMU-1_slice_info_simple.json");
+  // oReq.open("GET", "./spliteImg/test2/2021-01-26 16.08.13_slice_info_simple.json");
   oReq.send();  
 }
 
@@ -58,7 +66,8 @@ function loadImgByLevel (levelInfo){
       img.n = level+'_'+i+'_'+j
       // img.src = "/spliteImg/test/CMU-1_"+level+'_'+i+'_'+j+".jpg";
       // img.src = "/spliteImg/test/CMU-1_"+level+'_'+i+'_'+j+".jpg";
-      img.src = "/spliteImg/test2/2021-01-26 16.08.13_"+level+'_'+i+'_'+j+".jpg";
+      // img.src = "/spliteImg/test2/2021-01-26 16.08.13_"+level+'_'+i+'_'+j+".jpg";
+      img.src = "/spliteImg/1622/CMU-1_"+level+'_'+i+'_'+j+".jpg";
       // highResolution
       // imgAry.push(img)
       // imgAry[i * (row) + j] = img
@@ -89,7 +98,11 @@ function loadImgByLevelAndCanvasArea (levelInfo, coord, zoom, canvasArea){
     window.imglevel[parseInt(levelInfo.level)].imgAry = new Array(count);
   }
   var imgAry = window.imglevel[parseInt(levelInfo.level)].imgAry;
-
+  // var imgAryBaseWidth = window.imglevel[parseInt(window.baselevel.level)].imgAry[0].width
+  const imgBaseInfo = window.imgInfo.partition.find(function (item) {
+    return item.level === window.baselevel.level
+  })
+  const imgAryBaseWidth = imgBaseInfo.slice_size[0]
   // -----------------
   var canvasTemplate
   if (document.getElementById('level_' + level)) {
@@ -103,25 +116,24 @@ function loadImgByLevelAndCanvasArea (levelInfo, coord, zoom, canvasArea){
   canvasTemplate.scaleRate = scaleRate
   canvasTemplate.width = 500
   canvasTemplate.height = 500
-  var ss = canvasTemplate.scaleRate * Math.round(3000 / canvasTemplate.width)
+  var ss = canvasTemplate.scaleRate * Math.round(window.sliceSize / canvasTemplate.width)
+  var rate = Math.ceil(imgAryBaseWidth / canvasTemplate.width);
   // -------------------
-  if(level <= 4) {console.log('A')}
+  // if(level <= 4) {console.log('A')}
   for(var i = 0; i < row; i++){
     for(var j = 0; j < column; j++){
       var idx = i * (column) + j;
-      var t = Math.floor(idx/(column)) * 3000
+      // var t = Math.floor(idx/(column)) * window.sliceSize
+      var w = window.sliceSize / scaleRate/rate*zoom; // why 2 ?
+      var h = window.sliceSize / scaleRate/rate*zoom; // why 2 ?
+      var t = Math.floor(idx/column) * window.sliceSize
+      var x = ((idx%(column)) * window.sliceSize) / scaleRate / rate * zoom - coord.x * zoom
+      var y = (t)*zoom / scaleRate /rate - coord.y*zoom
       var areaB = { 
-        x: ((idx%(column)) * 3000)*zoom/ss - coord.x*zoom,
-        y: (t)*zoom/ss - coord.y*zoom,
-        w: 3000*zoom/ss,
-        h: 3000*zoom/ss
-      }
-      if(level <= 4) {
-        console.log('B',level, level+'_'+i+'_'+j, idx, boundaryIntersect(areaB, canvasArea), areaB,
-        't: ',t, 
-        'ss: ',ss,
-        'column: ',column,  
-        )
+        x: x,
+        y: y,
+        w: w,
+        h: h
       }
       if (boundaryIntersect(areaB, canvasArea)) {
         if (imgAry[idx]) {
@@ -139,7 +151,8 @@ function loadImgByLevelAndCanvasArea (levelInfo, coord, zoom, canvasArea){
           };
           img.n = level+'_'+i+'_'+j
           // img.src = "/spliteImg/test/CMU-1_"+level+'_'+i+'_'+j+".jpg";
-          img.src = "/spliteImg/test2/2021-01-26 16.08.13_"+level+'_'+i+'_'+j+".jpg";
+          // img.src = "/spliteImg/test2/2021-01-26 16.08.13_"+level+'_'+i+'_'+j+".jpg";
+          img.src = "/spliteImg/1622/CMU-1_"+level+'_'+i+'_'+j+".jpg";
           imgAry[i * (column) + j] = img
           // console.log('downloading...', level+'_'+i+'_'+j)
         }
@@ -172,94 +185,59 @@ function drawTempCanvasByLevel(levelInfo, coord, zoom, changeView){
   canvasTemplate.scaleRate = scaleRate
   canvasTemplate.width = 500
   canvasTemplate.height = 500
-  var ss = canvasTemplate.scaleRate * Math.round(3000 / canvasTemplate.width)
-  // console.log('level:',level, 'ss:',ss)
   var imgAry = window.imglevel[parseInt(level)].imgAry
-  
+  var imgAryBaseWidth = window.imglevel[parseInt(window.baselevel.level)].imgAry[0].width
   var ctx = canvasTemplate.getContext("2d");
   for(var i = 0; i < imgAry.length; i++) {
-    // var t = Math.floor(i/(row)) * 3000
-    var t = Math.floor(i/(column)) * 3000
+    var t = Math.floor(i/(column)) * window.sliceSize
     if (imgAry[i] && imgAry[i].comp) {
-      
       // 繪製暫時畫布
       // ctx.drawImage(圖片, left, top, width, height)
-      if(level === 4) {
-        // console.log('****************************************')
-        // console.log(imgAry[i].n, '----', level, zoom,
-        // 'i',i,' row:',row,' column:',column, ' ss:', ss,'scaleRate',canvasTemplate.scaleRate,
-        // 'Math.round(3000 / canvasTemplate.width)', Math.round(3000 / canvasTemplate.width),
-        // ((i%(column)) * 3000)*zoom/ss - coord.x*zoom,
-        // (t)*zoom/ss - coord.y*zoom,
-        // 3000*zoom/ss,
-        // 3000*zoom/ss)
-        // console.log('****************************************')
-      }
-      // ctx.drawImage(
-      //   imgAry[i],
-      //   ((i%(row)) * 3000)*zoom/ss - coord.x*zoom,
-      //   (t)*zoom/ss - coord.y*zoom,
-      //   3000*zoom/ss,
-      //   3000*zoom/ss);
       if (count === 1) {
         var w, h, x, y
-        // w = imgAry[i].width / 6
-        // h = imgAry[i].height / 6
         // why 2?
-        var rate = Math.ceil((imgAry[i].width / scaleRate)/canvasTemplate.width);
-        rate = (imgAry[i].width / scaleRate)/canvasTemplate.width;
+        var rate = Math.ceil(imgAryBaseWidth / canvasTemplate.width);
+        // var rate = Math.ceil(imgAry[i].width / scaleRate)/canvasTemplate.width;
         w = imgAry[i].width / scaleRate / rate *zoom; // why 2 ?
         h = imgAry[i].height / scaleRate / rate *zoom; // why 2 ?
         x = -1 * coord.x*zoom
         y = -1 * coord.y*zoom
-        console.log('x:', x, coord.x, ' y:', y, coord.y, 'zoom', zoom)
+        // console.log('x:', x, coord.x, ' y:', y, coord.y, 'zoom', zoom)
         ctx.drawImage(imgAry[i], x, y, w, h);
         ctx.font = "10px Arial";
         ctx.fillStyle = '#F00';
         ctx.fillText(imgAry[i].n, 0, 10);
       } else {
         // var area = { x: coord.x, y: coord.y, w: canvasTemplate.width*zoom, h: canvasTemplate.height*zoom, zoom:zoom}
-        ss = canvasTemplate.scaleRate * Math.round(3000 / canvasTemplate.width)
-        ss = canvasTemplate.scaleRate * Math.round(3000 / canvasTemplate.width)
-        var rate = Math.ceil((imgAry[i].width / canvasTemplate.scaleRate)/canvasTemplate.width);
-        rate = (imgAry[i].width / scaleRate)/canvasTemplate.width;
-        w = imgAry[i].width / canvasTemplate.scaleRate / rate *zoom; // why 2 ?
-        h = imgAry[i].height / canvasTemplate.scaleRate / rate *zoom; // why 2 ?
-        t = (i/column) * 3000
+        var rate = Math.ceil(imgAryBaseWidth / canvasTemplate.width);
+        w = window.sliceSize / scaleRate/rate*zoom; // why 2 ?
+        h = window.sliceSize / scaleRate/rate*zoom; // why 2 ?
+        t = Math.floor(i/column) * window.sliceSize
+        x = ((i%(column)) * window.sliceSize) / scaleRate / rate * zoom - coord.x * zoom
+        y = (t)*zoom / scaleRate /rate - coord.y*zoom
         var area = { x: 0, y: 0, w: 500, h: 500}
         // window.area = area
         var areaB = { 
-          x: ((i%(column)) * 3000)*zoom/ss - coord.x*zoom,
-          y: (t)*zoom/ss - coord.y*zoom,
-          w: 3000*zoom/ss,
-          h: 3000*zoom/ss
-        }
-        var areaB = { 
-          x: ((i%(column)) * 3000)/canvasTemplate.scaleRate - coord.x*zoom,
-          y: (t) / canvasTemplate.scaleRate - coord.y*zoom,
+          x: x,
+          y: y,
           w: w,
           h: h
         }
         if (boundaryIntersect(areaB, area)) {
-          /* ctx.drawImage(
-            imgAry[i],
-            ((i%(column)) * 3000)*zoom/ss - coord.x*zoom,
-            (t)*zoom/ss - coord.y*zoom,
-            3000*zoom/ss,
-            3000*zoom/ss
-          ); */
           ctx.drawImage(
             imgAry[i],
-            ((i%(column)) * 3000)*zoom/ss - coord.x*zoom,
-            (t)*zoom/ss - coord.y*zoom,
+            x,
+            y,
             w,
             h
           );
         }
         ctx.font = "10px Arial";
         ctx.fillStyle = '#F00';
-        // ctx.fillText(imgAry[i].n, ((i%(row)) * 3000)*zoom/ss - coord.x*zoom, (t)*zoom/ss - coord.y*zoom + 10);
-        ctx.fillText(imgAry[i].n, ((i%(column)) * 3000)*zoom/ss - coord.x*zoom, (t)*zoom/ss - coord.y*zoom + 10);
+        // ctx.fillText(imgAry[i].n, ((i%(row)) * window.sliceSize)*zoom/ss - coord.x*zoom, (t)*zoom/ss - coord.y*zoom + 10);
+        ctx.fillText(imgAry[i].n,
+          x,
+          y + 10);
       }
       // if (level === parseInt(window.baselevel.level) || changeView) {
       //   // console.log('ll', level, zoom)
@@ -280,7 +258,7 @@ function renderCanvasByLevel(levelInfo, coord, zoom){
   if (!zoom) {zoom = scaleRate}
   if (!coord) {coord = {x:0,y:0}}
   var canvasTemplate = document.getElementById('level_' + level);
-  var ss = scaleRate * Math.round(3000 / canvasTemplate.width)
+  var ss = scaleRate * Math.round(window.sliceSize / canvasTemplate.width)
   if (canvasTemplate) {
     dataURL=canvasTemplate.toDataURL('image/jpeg');
     // 將圖繪製到 真實畫布
@@ -337,10 +315,15 @@ function drawMiniMap () {
   const imgAry = window.imglevel[parseInt(level)].imgAry
   const scaleRate = 1
   const zoom = canvas.getZoom() ? canvas.getZoom() : 1
+  // const rate = Math.ceil((imgAry[0].width / scaleRate) / canvasMinimap.width)
   const rate = Math.ceil((imgAry[0].width / scaleRate) / canvasMinimap.width)
+  var imgAryBaseWidth = window.imglevel[parseInt(window.baselevel.level)].imgAry[0].width
   ctx.clearRect(0, 0, canvasMinimap.width, canvasMinimap.height)
   ctx.strokeStyle = '#FF0000'
   ctx.lineWidth = 1
+  console.log('****************************************456')
+  console.log(imgAry[0].width / scaleRate / rate, imgAry[0].height / scaleRate / rate)
+  console.log('****************************************789')
   ctx.drawImage(
     imgAry[0],
     0,
