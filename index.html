@@ -67,6 +67,10 @@
     </head>
     <body>
         <img id="Abs" src="" />
+        <div>
+            <span id="rotateNum"></span>
+            <button onclick="rotate()">rotate</button>
+        </div>
         <div id="leftDiv">
             <canvas id="minimapCanvas" width="500" height="500"></canvas>
             <div id="resultDiv">
@@ -134,9 +138,11 @@ function renderHigh(){
 
 window.beforeRotate = [];
 window.theta = 0;
+window.originalCenter = {};
 function rotate(){
     if(window.theta === 0) {
         window.beforeRotate = canvas.viewportTransform
+        window.originalCenter = CenterCoord();
     }
     // var curAngle = canvas.angle;
     // canvas.angle = (curAngle+15);
@@ -145,18 +151,43 @@ function rotate(){
     // canvas.backgroundImage.rotate(45);
     // update the canvas viewport
     // window.theta = typeof window.theta == 'undefined' ? 0 : window.theta + 15 * Math.PI / 180
-    window.theta = 90 * Math.PI / 180
+    window.theta = 45 * Math.PI / 180
+    
     console.log('coor', leftTopCoord().x, leftTopCoord().y)
     var ary = new Array(6)
     var rotateMatrix = [Math.cos(theta), Math.sin(theta), -1*Math.sin(theta), Math.cos(theta), 0, 0]
     // for (var i = 0;i < 6;i++) {
     //     ary[i] = canvas.viewportTransform[i] + rotateMatrix[i]
     // }
-    ary = matrixProduct(canvas.viewportTransform, rotateMatrix)
+    // ------------------
+    // ary = canvas.viewportTransform
+    // console.log('***A', ary)
+    // ary = matrixProduct(canvas.viewportTransform, rotateMatrix)
+    // var rotateOrigianlCenter = pointRotate(ary, window.originalCenter)
+    // console.log('center', window.originalCenter, rotateOrigianlCenter)
+    // // var centerMoveMatirx = [1,0,0,1, window.originalCenter.x - rotateOrigianlCenter.x, window.originalCenter.y - rotateOrigianlCenter.y ]
+    // var centerMoveMatirx = [1,0,0,1, 5, 5]
+    // console.log('***B---', centerMoveMatirx)
+    // console.log('***B', ary)
+    // ary = matrixAdd(ary, centerMoveMatirx)
+    // // ary = matrixProduct(ary, centerMoveMatirx)
+    // console.log('***C', ary)
+    // ------------------
+    var rotateOrigianlCenter = pointRotate(rotateMatrix, window.originalCenter)
+    var centerMoveMatirx = [1,0,0,1, window.originalCenter.x - rotateOrigianlCenter.x, window.originalCenter.y - rotateOrigianlCenter.y ]
+    ary = canvas.viewportTransform
+    ary = matrixProduct(canvas.viewportTransform, centerMoveMatirx)
+    ary = matrixProduct(ary, rotateMatrix)
+    // ------------------
+    // ary = canvas.viewportTransform
+    // var centerMoveMatirx = [1,0,0,1,50,50]
+    // ary = matrixProduct(ary, centerMoveMatirx)
+    // ------------------
     // ary = matrixAdd(ary, [0,0,0,0,CenterCoord().x,CenterCoord().y]) 
-    console.log('ary', ary)
+    // console.log('ary', ary)
     canvas.setViewportTransform(ary);
     canvas.renderAll();
+    document.getElementById('rotateNum').innerHTML = window.theta
 }
 
 function matrixAdd(A,B){
@@ -167,10 +198,11 @@ function matrixAdd(A,B){
     return ary
 }
 
-function pointRotate(matrix, point){
-    return [
-
-    ]
+function pointRotate(A, point){
+    return {
+      x:  A[0] * point.x + A[2] * point.y + A[4],
+      y:  A[1] * point.x + A[3] * point.y + A[5]
+    }
 }
 
 function matrixProduct(A,B){
