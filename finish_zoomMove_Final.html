@@ -2,7 +2,7 @@
     <head>
         <script src="js/jquery-3.5.1.min.js"></script>
         <script src="js/fabric.min.js"></script>
-        <script src="rt.js"></script>
+        <script src="kd.js"></script>
         <style>
             body{
                 /* overflow: hidden; */
@@ -68,13 +68,8 @@
     <body>
         <img id="Abs" src="" />
         <div>
-            <input type="range" min="0" max="360" value="45" class="slider" id="myRange">
-            <input type="number" id="angle" value="45" />
-            <!-- <button onclick='rotate(document.getElementById("angle").value)'>rotate</button> -->
-            <button onclick='rotateSwitch(document.getElementById("angle").value)'>rotate</button>
-            <button onclick='shift(5,5)'>shift</button>
-            <button onclick="console.log(canvas.viewportTransform)">viewportTransform</button>
             <span id="rotateNum"></span>
+            <button onclick="rotate()">rotate</button>
         </div>
         <div id="leftDiv">
             <canvas id="minimapCanvas" width="500" height="500"></canvas>
@@ -141,6 +136,59 @@ function renderHigh(){
     // }
 }
 
+window.beforeRotate = [];
+window.theta = 0;
+window.originalCenter = {};
+function rotate(){
+    if(window.theta === 0) {
+        window.beforeRotate = canvas.viewportTransform
+        window.originalCenter = CenterCoord();
+    }
+    // var curAngle = canvas.angle;
+    // canvas.angle = (curAngle+15);
+    console.log('zoom', canvas.getZoom())
+    // canvas.backgroundImage.setAngle(canvas.angle);
+    // canvas.backgroundImage.rotate(45);
+    // update the canvas viewport
+    // window.theta = typeof window.theta == 'undefined' ? 0 : window.theta + 15 * Math.PI / 180
+    window.theta = 45 * Math.PI / 180
+    
+    console.log('coor', leftTopCoord().x, leftTopCoord().y)
+    var ary = new Array(6)
+    var rotateMatrix = [Math.cos(theta), Math.sin(theta), -1*Math.sin(theta), Math.cos(theta), 0, 0]
+    // for (var i = 0;i < 6;i++) {
+    //     ary[i] = canvas.viewportTransform[i] + rotateMatrix[i]
+    // }
+    // ------------------
+    // ary = canvas.viewportTransform
+    // console.log('***A', ary)
+    // ary = matrixProduct(canvas.viewportTransform, rotateMatrix)
+    // var rotateOrigianlCenter = pointRotate(ary, window.originalCenter)
+    // console.log('center', window.originalCenter, rotateOrigianlCenter)
+    // // var centerMoveMatirx = [1,0,0,1, window.originalCenter.x - rotateOrigianlCenter.x, window.originalCenter.y - rotateOrigianlCenter.y ]
+    // var centerMoveMatirx = [1,0,0,1, 5, 5]
+    // console.log('***B---', centerMoveMatirx)
+    // console.log('***B', ary)
+    // ary = matrixAdd(ary, centerMoveMatirx)
+    // // ary = matrixProduct(ary, centerMoveMatirx)
+    // console.log('***C', ary)
+    // ------------------
+    var rotateOrigianlCenter = pointRotate(rotateMatrix, window.originalCenter)
+    var centerMoveMatirx = [1,0,0,1, window.originalCenter.x - rotateOrigianlCenter.x, window.originalCenter.y - rotateOrigianlCenter.y ]
+    ary = canvas.viewportTransform
+    ary = matrixProduct(canvas.viewportTransform, centerMoveMatirx)
+    ary = matrixProduct(ary, rotateMatrix)
+    // ------------------
+    // ary = canvas.viewportTransform
+    // var centerMoveMatirx = [1,0,0,1,50,50]
+    // ary = matrixProduct(ary, centerMoveMatirx)
+    // ------------------
+    // ary = matrixAdd(ary, [0,0,0,0,CenterCoord().x,CenterCoord().y]) 
+    // console.log('ary', ary)
+    canvas.setViewportTransform(ary);
+    canvas.renderAll();
+    document.getElementById('rotateNum').innerHTML = window.theta
+}
 
 function matrixAdd(A,B){
     var ary = new Array(6)
@@ -179,16 +227,11 @@ var currentResolution = 0
         //canvas.selection = false;
         canvas.on('mouse:down', function (options) {
             var evt = options.e;
-            var pointer = canvas.getPointer(evt);
-            // console.log('PointerA: ', pointer)
-            // console.log('PointerB: ', evt.offsetX, evt.offsetY)
             if (evt.altKey === true) {
                 this.isDragging = true;
                 this.selection = false;
                 this.lastPosX = evt.clientX;
                 this.lastPosY = evt.clientY;
-                this.lastPosX1 = pointer.x;
-                this.lastPosY1 = pointer.y;
             }
         });
         canvas.on('mouse:up', function (options) {
@@ -198,18 +241,13 @@ var currentResolution = 0
         canvas.on('mouse:move', function (options) {
             if (this.isDragging) {
                 var e = options.e;
-                var pointer = canvas.getPointer(e);
                 var vpt = this.viewportTransform;
                 vpt[4] += e.clientX - this.lastPosX;
                 vpt[5] += e.clientY - this.lastPosY;
-                // vpt[4] += pointer.x - this.lastPosX1;
-                // vpt[5] += pointer.y - this.lastPosY1;
-                console.log('**', pointer.x - this.lastPosX, e.clientY - this.lastPosY, pointer.x - this.lastPosX1, pointer.y - this.lastPosY1)
                 // this.requestRenderAll();
+                // updateMiniMapVP();
                 this.lastPosX = e.clientX;
                 this.lastPosY = e.clientY;
-                this.lastPosX1 = pointer.x;
-                this.lastPosY1 = pointer.y;
                 var zoom = canvas.getZoom();
                 clearTimeout(tt)
                 // renderCanvas()
@@ -242,14 +280,7 @@ var currentResolution = 0
             zoom *= 0.999 ** delta;
             if (zoom > 70) zoom = 70;
             if (zoom < 0.01) zoom = 0.01;
-            // canvas.setZoom(zoom);
-            var pointer = canvas.getPointer(opt.e)
-            // console.log('Point', opt.e.offsetX, opt.e.offsetY, pointer)
-            canvas.zoomToPoint({
-                x: opt.e.offsetX,
-                y: opt.e.offsetY
-            }, zoom);
-            // canvas.zoomToPoint(pointer, zoom);
+            canvas.setZoom(zoom);
             // 滾動切換 圖片解析度
             // if (zoom > 10 && currentResolution === 0) {
             //     // 讀取高解析度
@@ -334,19 +365,6 @@ var currentResolution = 0
     initCanvas()
     loadInfo()
 
-    var slider = document.getElementById("myRange");
-    var myAngle = document.getElementById("angle");
-    var output = document.getElementById("rotateNum");
-    // output.innerHTML = slider.value; // Display the default slider value
 
-    // Update the current slider value (each time you drag the slider handle)
-    slider.oninput = function() {
-        rotateSwitch(this.value)
-        document.getElementById('angle').value = this.value
-        // output.innerHTML = window.theta
-    }
-    myAngle.oninput = function() {
-        document.getElementById('myRange').value = this.value
-    }
     </script>
 </html>
