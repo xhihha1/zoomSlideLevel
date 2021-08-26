@@ -1,5 +1,8 @@
 # zoomSlideLevel
 
+目前旋轉setViewportTransform會出現模糊某些腳部被截斷畫面的情況，
+還要在查fabric
+
 每張圖切片尺寸 3000 * 3000  
 
 切片圖片命名方式: 檔名_level_row_colume  
