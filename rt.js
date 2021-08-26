@@ -33,7 +33,8 @@ function loadInfo (){
     // for(var i = 0 ; i < window.imgInfo.partition.length; i++) {
     //   loadImgByLevel (window.imgInfo.partition[i])
     // }
-    var zoom = canvas.getZoom();
+    // var zoom = canvas.getZoom();
+    var zoom = realZoom();
     var area = { x: 0, y: 0, w: 500, h: 500}
     loadImgByLevelAndCanvasArea(window.baselevel, leftTopCoord(), zoom, area)
     // for(var i = 0 ; i < window.imgInfo.partition.length; i++) {
@@ -329,7 +330,8 @@ function drawMiniMap () {
   const level = window.baselevel.level
   const imgAry = window.imglevel[parseInt(level)].imgAry
   const scaleRate = 1
-  const zoom = canvas.getZoom() ? canvas.getZoom() : 1
+  // const zoom = canvas.getZoom() ? canvas.getZoom() : 1
+  const zoom = realZoom() ? realZoom() : 1
   // const rate = Math.ceil((imgAry[0].width / scaleRate) / canvasMinimap.width)
   const rate = Math.ceil((imgAry[0].width / scaleRate) / canvasMinimap.width)
   var imgAryBaseWidth = window.imglevel[parseInt(window.baselevel.level)].imgAry[0].width
@@ -370,7 +372,7 @@ function rotate(rotateValue){
   
   // var curAngle = canvas.angle;
   // canvas.angle = (curAngle+15);
-  console.log('zoom', canvas.getZoom(), rotateValue)
+  console.log('zoom', canvas.getZoom(), realZoom(), rotateValue)
   // canvas.backgroundImage.setAngle(canvas.angle);
   // canvas.backgroundImage.rotate(45);
   // update the canvas viewport
@@ -393,12 +395,124 @@ function rotate(rotateValue){
   document.getElementById('rotateNum').innerHTML = window.theta
 }
 
+function rotatePoint(rotateValue, pointer){
+  console.log('----------: ',rotateValue, pointer)
+  if (!pointer) {
+    pointer = leftTopCoord()
+  }
+  console.log('----------: ',rotateValue, pointer)
+  // if(window.theta === 0) {
+  //   window.beforeRotate = canvas.viewportTransform
+  //   window.theta = rotateValue
+  //   var rtheta = parseInt(window.theta) * Math.PI / 180
+  //   var ary = new Array(6)
+  //   var rotateMatrix = [Math.cos(rtheta), Math.sin(rtheta), -1*Math.sin(rtheta), Math.cos(rtheta), 0, 0]
+  //   var rotateOrigianlCenter = pointRotate(rotateMatrix, pointer)
+  //   var centerMoveMatirx = [1,0,0,1, pointer.x - rotateOrigianlCenter.x, pointer.y - rotateOrigianlCenter.y ]
+  //   ary = window.beforeRotate
+  //   ary = matrixProduct(ary, centerMoveMatirx) // 先平移
+  //   ary = matrixProduct(ary, rotateMatrix) // 再旋轉
+  //   canvas.setViewportTransform(ary);
+  //   canvas.renderAll();
+  // } else {
+    // 先反轉到 0度
+    // var rtheta = -1 * parseInt(window.theta) * Math.PI / 180
+    var rtheta = parseInt(360 - window.theta) * Math.PI / 180
+    var ary = new Array(6)
+    var rotateMatrix = [Math.cos(rtheta), Math.sin(rtheta), -1*Math.sin(rtheta), Math.cos(rtheta), 0, 0]
+    var rotateOrigianlCenter = pointRotate(rotateMatrix, pointer)
+    var centerMoveMatirx = [1,0,0,1, pointer.x - rotateOrigianlCenter.x, pointer.y - rotateOrigianlCenter.y ]
+    ary = canvas.viewportTransform
+    ary = matrixProduct(ary, centerMoveMatirx) // 先平移
+    ary = matrixProduct(ary, rotateMatrix) // 再旋轉
+    canvas.setViewportTransform(ary);
+    // 縮放
+    var zoom = canvas.viewportTransform[0] // 轉正後可用來取代縮放倍率
+    // console.log('**** zoom---------', zoom)
+    // newZoomToPoint(pointer, zoom) // 不需要重新縮放
+    // 再正轉到 rotateValue 角度
+    // setTimeout(function(){
+      window.theta = rotateValue
+      var rtheta = parseInt(window.theta) * Math.PI / 180
+      var ary = new Array(6)
+      var rotateMatrix = [Math.cos(rtheta), Math.sin(rtheta), -1*Math.sin(rtheta), Math.cos(rtheta), 0, 0]
+      var rotateOrigianlCenter = pointRotate(rotateMatrix, pointer)
+      var centerMoveMatirx = [1,0,0,1, pointer.x - rotateOrigianlCenter.x, pointer.y - rotateOrigianlCenter.y ]
+      ary = canvas.viewportTransform
+      ary = matrixProduct(ary, centerMoveMatirx) // 先平移
+      ary = matrixProduct(ary, rotateMatrix) // 再旋轉
+      canvas.setViewportTransform(ary);
+      canvas.renderAll();
+    // },2000)
+    
+  // }
+}
+
+function newZoomToPoint (pointer, value) {
+  // 補 1. 先以point，反轉theta轉正
+  // var rtheta = -1 * parseInt(window.theta) * Math.PI / 180
+  var rtheta = parseInt(360 - window.theta) * Math.PI / 180
+  var ary = new Array(6)
+  var rotateMatrix = [Math.cos(rtheta), Math.sin(rtheta), -1*Math.sin(rtheta), Math.cos(rtheta), 0, 0]
+  var rotateOrigianlCenter = pointRotate(rotateMatrix, pointer)
+  var centerMoveMatirx = [1,0,0,1, pointer.x - rotateOrigianlCenter.x, pointer.y - rotateOrigianlCenter.y ]
+  ary = canvas.viewportTransform
+  ary = matrixProduct(ary, centerMoveMatirx) // 先平移
+  ary = matrixProduct(ary, rotateMatrix) // 再旋轉
+  canvas.setViewportTransform(ary);
+  // ------------------------------------------------
+  var zoomOrigianlCenter = pointer
+  var zoomOrigianlRate = canvas.viewportTransform[0]
+  // 1. 找出當前座標點，轉回螢幕點的座標
+  var screenPoint = {
+    x: zoomOrigianlCenter.x * zoomOrigianlRate + canvas.viewportTransform[4],
+    y: zoomOrigianlCenter.y * zoomOrigianlRate + canvas.viewportTransform[5]
+  }
+  console.log(zoomOrigianlCenter, screenPoint, value)
+  canvas.zoomToPoint(screenPoint, value);
+  // ------------------------------------------------
+  // 補 2. 轉 theta
+  var rtheta = parseInt(window.theta) * Math.PI / 180
+  var ary = new Array(6)
+  var rotateMatrix = [Math.cos(rtheta), Math.sin(rtheta), -1*Math.sin(rtheta), Math.cos(rtheta), 0, 0]
+  var rotateOrigianlCenter = pointRotate(rotateMatrix, pointer)
+  var centerMoveMatirx = [1,0,0,1, pointer.x - rotateOrigianlCenter.x, pointer.y - rotateOrigianlCenter.y ]
+  ary = canvas.viewportTransform
+  ary = matrixProduct(ary, centerMoveMatirx) // 先平移
+  ary = matrixProduct(ary, rotateMatrix) // 再旋轉
+  canvas.setViewportTransform(ary);
+  canvas.renderAll();
+}
+
+function realZoom () {
+  var zoom = 0
+  if (window.theta !== 0) {
+    var rtheta = -1 * parseInt(window.theta) * Math.PI / 180
+    var rotateMatrix = [Math.cos(rtheta), Math.sin(rtheta), -1*Math.sin(rtheta), Math.cos(rtheta), 0, 0]
+    var ary = canvas.viewportTransform
+    ary = matrixProduct(ary, rotateMatrix) // 再旋轉
+    zoom = ary[0];
+  } else {
+    zoom = canvas.getZoom();
+  }
+  return zoom
+}
+
 function shift(x, y) {
   var vpt = canvas.viewportTransform;
   vpt[4] += x;
   vpt[5] += y;
   canvas.setViewportTransform(vpt);
   canvas.renderAll();
+}
+
+function pan (x,y) {
+  // canvas.absolutePan({ x: x, y: y })
+  // canvas.absolutePan({ x: 0, y: 0 })
+  newZoomToPoint ({ x: 0, y: 0 }, 1)
+  circle(-39,-39,50,'red')
+  circle(-689,-294,50,'green')
+  circle(-400,-200,50,'blue')
 }
 
 function rotateBg(rotateValue){
@@ -411,21 +525,26 @@ function rotateBg(rotateValue){
 
 function rotateSwitch(rotateValue) {
   // rotateBg(rotateValue)
-  rotate(rotateValue)
+  // rotate(rotateValue)
+  console.log('before rotate zoom: ',realZoom())
+  rotatePoint(rotateValue, leftTopCoord())
+  console.log(' after rotate zoom: ',realZoom())
 }
 
-function circle (x,y){
+function circle (x,y,r, color){
+  if(!r){ r = 1 }
+  if(!color){ color = 'red' }
   var ellipse = new fabric.Ellipse({
-    strokeWidth: 5,
-    fill: 'red',
-    stroke: 'red',
+    strokeWidth: 14,
+    fill: color,
+    stroke: color,
     originX: 'left',
     originY: 'top',
     top: y,
     left: x,
-    rx: 1,
-    ry: 1,
-    selectable: false,
+    rx: r,
+    ry: r,
+    selectable: true,
     hasBorders: true,
     hasControls: true,
     strokeUniform: true
