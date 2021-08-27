@@ -2,7 +2,7 @@
     <head>
         <script src="js/jquery-3.5.1.min.js"></script>
         <script src="js/fabric.min.js"></script>
-        <script src="dz.js"></script>
+        <script src="rt.js"></script>
         <style>
             body{
                 /* overflow: hidden; */
@@ -62,33 +62,6 @@
                 top: 0px;
                 left: 500px;
                 /* visibility: hidden; */
-            }
-            #level_0 {
-                background-color:darkorange;
-            }
-            #level_1 {
-                background-color:darkkhaki;
-            }
-            #level_2 {
-                background-color:crimson
-            }
-            #level_3 {
-                background-color:burlywood;
-            }
-            #level_4 {
-                background-color: aqua;
-            }
-            #level_5 {
-                background-color: brown;
-            }
-            #level_6 {
-                background-color:cornflowerblue;
-            }
-            #level_7 {
-                background-color:fuchsia;
-            }
-            #level_8 {
-                background-color:deepskyblue;
             }
         </style>
     </head>
@@ -273,25 +246,20 @@ var currentResolution = 0
                     /*var levelInfo = window.imgInfo.partition.find(function(item){
                         return item.scaleRate < zoom || item.scaleRate === 1
                     })
+                    console.log('setTime out ll*', levelInfo.level, zoom)
                     for(var i in window.imgInfo.partition) {
+                        console.log('i', i, window.imgInfo.partition[i])
                         if(window.imgInfo.partition[i] && window.imglevel[parseInt(window.imgInfo.partition[i].level)]){
                             // drawTempCanvasByLevel(window.imgInfo.partition[i], leftTopCoord(), zoom, true)
-                            var area = { x: shiftDrawArea(), y: shiftDrawArea(), w: window.tempCanvasWidth, h: window.tempCanvasWidth}
+                            var area = { x: 0, y: 0, w: 500, h: 500}
                             loadImgByLevelAndCanvasArea(window.imgInfo.partition[i], leftTopCoord(), zoom, area)
                         }
                     }*/
                     var levelInfo = window.imgInfo.partition.find(function(item){
                         return item.scaleRate < zoom || item.scaleRate === 1
                     })
-                    var area = { x: shiftDrawArea(), y: shiftDrawArea(), w: window.tempCanvasWidth, h: window.tempCanvasWidth}
-                    var coordinate = leftTopCoord()
-                    if (window.theta !== 0) {
-                        var tempAngle = window.theta
-                        rotateSwitch(0)
-                        coordinate = leftTopCoord()
-                        rotateSwitch(tempAngle)
-                    }
-                    loadImgByLevelAndCanvasArea(levelInfo, coordinate, zoom, area)
+                    var area = { x: 0, y: 0, w: 500, h: 500}
+                    loadImgByLevelAndCanvasArea(levelInfo, leftTopCoord(), zoom, area)
                 },100)
             }
             canvas.renderAll();
@@ -329,7 +297,6 @@ var currentResolution = 0
             opt.e.preventDefault();
             opt.e.stopPropagation();
             printInfo ('zoom:'+zoom)
-            // return false
             clearTimeout(tt)
             // renderCanvas()
             tt = setTimeout(function(){
@@ -341,22 +308,15 @@ var currentResolution = 0
                     // console.log('i', i, window.imgInfo.partition[i])
                     if(window.imgInfo.partition[i] && window.imglevel[parseInt(window.imgInfo.partition[i].level)]){
                         // drawTempCanvasByLevel(window.imgInfo.partition[i], leftTopCoord(), zoom, true)
-                        var area = { x: shiftDrawArea(), y: shiftDrawArea(), w: window.tempCanvasWidth, h: window.tempCanvasWidth}
+                        var area = { x: 0, y: 0, w: 500, h: 500}
                         loadImgByLevelAndCanvasArea(window.imgInfo.partition[i], leftTopCoord(), zoom, area)
                     }
                 }*/
                 var levelInfo = window.imgInfo.partition.find(function(item){
                     return item.scaleRate < zoom || item.scaleRate === 1
                 })
-                var area = { x: shiftDrawArea(), y: shiftDrawArea(), w: window.tempCanvasWidth, h: window.tempCanvasWidth}
-                var coordinate = leftTopCoord()
-                if (window.theta !== 0) {
-                    var tempAngle = window.theta
-                    rotateSwitch(0)
-                    coordinate = leftTopCoord()
-                    rotateSwitch(tempAngle)
-                }
-                loadImgByLevelAndCanvasArea(levelInfo, coordinate, zoom, area)
+                var area = { x: 0, y: 0, w: 500, h: 500}
+                loadImgByLevelAndCanvasArea(levelInfo, leftTopCoord(), zoom, area)
                 // renderCanvasByLevel(levelInfo, leftTopCoord(), zoom)
                 // if (change) {
                 //     renderCanvas(leftTopCoord(), canvas.getZoom());

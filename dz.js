@@ -7,7 +7,8 @@ window.sliceSize = 3000
 window.beforeRotate = [];
 window.theta = 0;
 window.originalCenter = {};
-
+window.viewWidth = 500
+window.tempCanvasWidth = window.viewWidth * 2.0
 
 function loadInfo (){
  
@@ -35,11 +36,18 @@ function loadInfo (){
     // }
     // var zoom = canvas.getZoom();
     var zoom = realZoom();
-    var area = { x: 0, y: 0, w: 500, h: 500}
-    loadImgByLevelAndCanvasArea(window.baselevel, leftTopCoord(), zoom, area)
+    var area = { x: shiftDrawArea(), y: shiftDrawArea(), w: window.tempCanvasWidth, h: window.tempCanvasWidth}
+    var coordinate = leftTopCoord()
+    if (window.theta !== 0) {
+      var tempAngle = window.theta
+      rotateSwitch(0)
+      coordinate = leftTopCoord()
+      rotateSwitch(tempAngle)
+    }
+    loadImgByLevelAndCanvasArea(window.baselevel, coordinate, zoom, area)
     // for(var i = 0 ; i < window.imgInfo.partition.length; i++) {
     //   // loadImgByLevel (window.imgInfo.partition[i])
-    //   if(window.imgInfo.partition[i].level >3) {
+    //   if(window.imgInfo.partition[i].level > 1) {
     //     loadImgByLevelAndCanvasArea(window.imgInfo.partition[i], leftTopCoord(), zoom, area)
     //   }
     // }
@@ -120,10 +128,9 @@ function loadImgByLevelAndCanvasArea (levelInfo, coord, zoom, canvasArea){
   }
   canvasTemplate.level = level
   canvasTemplate.scaleRate = scaleRate
-  canvasTemplate.width = 500
-  canvasTemplate.height = 500
-  var ss = canvasTemplate.scaleRate * Math.round(window.sliceSize / canvasTemplate.width)
-  var rate = Math.ceil(imgAryBaseWidth / canvasTemplate.width);
+  canvasTemplate.width = window.tempCanvasWidth
+  canvasTemplate.height = window.tempCanvasWidth
+  var rate = Math.ceil(imgAryBaseWidth / window.viewWidth);
   // -------------------
   // if(level <= 4) {console.log('A')}
   for(var i = 0; i < row; i++){
@@ -189,10 +196,11 @@ function drawTempCanvasByLevel(levelInfo, coord, zoom, changeView){
   }
   canvasTemplate.level = level
   canvasTemplate.scaleRate = scaleRate
-  canvasTemplate.width = 500
-  canvasTemplate.height = 500
+  canvasTemplate.width = window.tempCanvasWidth
+  canvasTemplate.height = window.tempCanvasWidth
   var imgAry = window.imglevel[parseInt(level)].imgAry
-  var imgAryBaseWidth = window.imglevel[parseInt(window.baselevel.level)].imgAry[0].width
+  // var imgAryBaseWidth = window.imglevel[parseInt(window.baselevel.level)].imgAry[0].width
+  var imgAryBaseWidth = window.baselevel.slice_size[0]
   var ctx = canvasTemplate.getContext("2d");
   for(var i = 0; i < imgAry.length; i++) {
     var t = Math.floor(i/(column)) * window.sliceSize
@@ -202,26 +210,26 @@ function drawTempCanvasByLevel(levelInfo, coord, zoom, changeView){
       if (count === 1) {
         var w, h, x, y
         // why 2?
-        var rate = Math.ceil(imgAryBaseWidth / canvasTemplate.width);
-        // var rate = Math.ceil(imgAry[i].width / scaleRate)/canvasTemplate.width;
+        var rate = Math.ceil(imgAryBaseWidth / window.viewWidth);
         w = imgAry[i].width / scaleRate / rate *zoom; // why 2 ?
         h = imgAry[i].height / scaleRate / rate *zoom; // why 2 ?
-        x = -1 * coord.x*zoom
-        y = -1 * coord.y*zoom
+        // x = -1 * coord.x*zoom
+        // y = -1 * coord.y*zoom
+        x = (shiftByViewWidth(0,0,0,0,0,zoom) -1 * coord.x)*zoom
+        y = (shiftByViewWidth(0,0,0,0,0,zoom) -1 * coord.y)*zoom
         // console.log('x:', x, coord.x, ' y:', y, coord.y, 'zoom', zoom)
         ctx.drawImage(imgAry[i], x, y, w, h);
         ctx.font = "10px Arial";
         ctx.fillStyle = '#F00';
         ctx.fillText(imgAry[i].n, 0, 10);
       } else {
-        // var area = { x: coord.x, y: coord.y, w: canvasTemplate.width*zoom, h: canvasTemplate.height*zoom, zoom:zoom}
-        var rate = Math.ceil(imgAryBaseWidth / canvasTemplate.width);
+        var rate = Math.ceil(imgAryBaseWidth / window.viewWidth);
         w = window.sliceSize / scaleRate/rate*zoom; // why 2 ?
         h = window.sliceSize / scaleRate/rate*zoom; // why 2 ?
         t = Math.floor(i/column) * window.sliceSize
-        x = ((i%(column)) * window.sliceSize) / scaleRate / rate * zoom - coord.x * zoom
-        y = (t)*zoom / scaleRate /rate - coord.y*zoom
-        var area = { x: 0, y: 0, w: 500, h: 500}
+        x = ((i%(column)) * window.sliceSize) / scaleRate / rate * zoom + (shiftByViewWidth(0,0,0,0,0,zoom) -1 * coord.x)*zoom
+        y = (t)*zoom / scaleRate /rate + (shiftByViewWidth(0,0,0,0,0,zoom) -1 * coord.y)*zoom
+        var area = { x: shiftDrawArea(), y: shiftDrawArea(), w: window.tempCanvasWidth, h: window.tempCanvasWidth}
         // window.area = area
         var areaB = { 
           x: x,
@@ -264,7 +272,6 @@ function renderCanvasByLevel(levelInfo, coord, zoom){
   if (!zoom) {zoom = scaleRate}
   if (!coord) {coord = {x:0,y:0}}
   var canvasTemplate = document.getElementById('level_' + level);
-  var ss = scaleRate * Math.round(window.sliceSize / canvasTemplate.width)
   if (canvasTemplate) {
     dataURL=canvasTemplate.toDataURL('image/jpeg');
     // 將圖繪製到 真實畫布
@@ -283,8 +290,8 @@ function renderCanvasByLevel(levelInfo, coord, zoom){
       originX: 'left',
       originY: 'top',
       // angle: 45, // theta window.theta
-      left: coord.x,
-      top: coord.y,
+      left: coord.x - shiftByViewWidth(0,0,0,0,0,zoom),
+      top: coord.y - shiftByViewWidth(0,0,0,0,0,zoom),
       scaleX: 1 / zoom,
       scaleY: 1 / zoom
     });
@@ -294,7 +301,8 @@ function renderCanvasByLevel(levelInfo, coord, zoom){
 }
 
 function boundaryIntersect(areaA, areaB) {
-  // area: {x,y,w,h}
+  console.log('areaB', areaB)
+    // area: {x,y,w,h}
   // 確認 A x 兩端點 交集 B
   var ax1 = areaA.x, ax2 = areaA.x + areaA.w;
   var ay1 = areaA.y, ay2 = areaA.y + areaA.h;
@@ -317,7 +325,10 @@ function boundaryIntersect(areaA, areaB) {
     yIntersect = true
   }
   return xIntersect & yIntersect
+  // return true
+
 }
+
 
 function drawMiniMap () {
   const that = this
@@ -328,13 +339,15 @@ function drawMiniMap () {
   canvasMinimap.width = 500
   canvasMinimap.height = 500
   const level = window.baselevel.level
-  const imgAry = window.imglevel[parseInt(level)].imgAry
+  
   const scaleRate = 1
   // const zoom = canvas.getZoom() ? canvas.getZoom() : 1
   const zoom = realZoom() ? realZoom() : 1
+  // var imgAryBaseWidth = window.imglevel[parseInt(window.baselevel.level)].imgAry[0].width
+  var imgAryBaseWidth = window.baselevel.slice_size[0]
   // const rate = Math.ceil((imgAry[0].width / scaleRate) / canvasMinimap.width)
-  const rate = Math.ceil((imgAry[0].width / scaleRate) / canvasMinimap.width)
-  var imgAryBaseWidth = window.imglevel[parseInt(window.baselevel.level)].imgAry[0].width
+  const rate = Math.ceil((imgAryBaseWidth / scaleRate) / canvasMinimap.width)
+  
   ctx.clearRect(0, 0, canvasMinimap.width, canvasMinimap.height)
   ctx.strokeStyle = '#FF0000'
   ctx.lineWidth = 1
@@ -343,23 +356,61 @@ function drawMiniMap () {
   // var rtheta = parseInt(window.theta) * Math.PI / 180
   // ctx.rotate(rtheta);
   // ----------------------
-  ctx.drawImage(
-    imgAry[0],
-    0,
-    0,
-    imgAry[0].width / scaleRate / rate,
-    imgAry[0].height / scaleRate / rate
-  )
+  if(window.imglevel[parseInt(level)]){
+    const imgAry = window.imglevel[parseInt(level)].imgAry
+    ctx.drawImage(
+      imgAry[0],
+      0,
+      0,
+      imgAry[0].width / scaleRate / rate,
+      imgAry[0].height / scaleRate / rate
+    )
+  }
   // ----------------------
   // ctx.rotate(rtheta * -1);
   // ----------------------
+  var coordinate = leftTopCoord()
+  if (window.theta !== 0) {
+      var tempAngle = window.theta
+      rotateSwitch(0)
+      coordinate = leftTopCoord()
+      rotateSwitch(tempAngle)
+  }
+  // -----------------------
+  ctx.strokeStyle = 'red'
   ctx.beginPath()
-  const x = that.leftTopCoord().x
-  const y = that.leftTopCoord().y
-  const w = canvasMinimap.width / zoom
-  const h = canvasMinimap.height / zoom
+  var x = coordinate.x
+  var y = coordinate.y
+  var w = canvasMinimap.width / zoom
+  var h = canvasMinimap.height / zoom
   // console.log('x:', x, that.leftTopCoord().x, ' y:', y, that.leftTopCoord().y, 'zoom', zoom, 'minimap')
   ctx.rect(x, y, w, h)
+  ctx.stroke()
+  // ------------------------
+  ctx.strokeStyle = 'green'
+  ctx.beginPath()
+  x = coordinate.x - shiftByViewWidth(0,0,0,0,0,zoom)
+  y = coordinate.y - shiftByViewWidth(0,0,0,0,0,zoom)
+  // const w = canvasMinimap.width / zoom
+  // const h = canvasMinimap.height / zoom
+  w = window.tempCanvasWidth / zoom
+  h = window.tempCanvasWidth / zoom
+  // console.log('x:', x, that.leftTopCoord().x, ' y:', y, that.leftTopCoord().y, 'zoom', zoom, 'minimap')
+  ctx.rect(x, y, w, h)
+  ctx.stroke()
+  // ----------------------
+  // 使用旋轉後四個角座標畫線
+  var lt = fabric.util.transformPoint({ x: 0, y: 0 }, fabric.util.invertTransform(canvas.viewportTransform))
+  var rt = fabric.util.transformPoint({ x: canvas.width, y: 0 }, fabric.util.invertTransform(canvas.viewportTransform))
+  var rb = fabric.util.transformPoint({ x: canvas.width, y: canvas.height }, fabric.util.invertTransform(canvas.viewportTransform))
+  var lb = fabric.util.transformPoint({ x: 0, y: canvas.height }, fabric.util.invertTransform(canvas.viewportTransform))
+  ctx.strokeStyle = 'blue'
+  ctx.beginPath()
+  ctx.moveTo(lt.x, lt.y);
+  ctx.lineTo(rt.x, rt.y);
+  ctx.lineTo(rb.x, rb.y);
+  ctx.lineTo(lb.x, lb.y);
+  ctx.closePath();
   ctx.stroke()
 }
 
@@ -426,6 +477,7 @@ function rotatePoint(rotateValue, pointer){
     ary = matrixProduct(ary, centerMoveMatirx) // 先平移
     ary = matrixProduct(ary, rotateMatrix) // 再旋轉
     canvas.setViewportTransform(ary);
+    canvas.renderAll();
     // 縮放
     var zoom = canvas.viewportTransform[0] // 轉正後可用來取代縮放倍率
     // console.log('**** zoom---------', zoom)
@@ -444,11 +496,15 @@ function rotatePoint(rotateValue, pointer){
       canvas.setViewportTransform(ary);
       canvas.renderAll();
     // },2000)
-    
+    clearTimeout(window.dmini)
+    window.dmini = setTimeout(function(){
+      drawMiniMap()
+    },100)
   // }
 }
 
 function newZoomToPoint (pointer, value) {
+  window.pointer = pointer
   // 補 1. 先以point，反轉theta轉正
   // var rtheta = -1 * parseInt(window.theta) * Math.PI / 180
   var rtheta = parseInt(360 - window.theta) * Math.PI / 180
@@ -470,6 +526,7 @@ function newZoomToPoint (pointer, value) {
   }
   console.log(zoomOrigianlCenter, screenPoint, value)
   canvas.zoomToPoint(screenPoint, value);
+  canvas.renderAll();
   // ------------------------------------------------
   // 補 2. 轉 theta
   var rtheta = parseInt(window.theta) * Math.PI / 180
@@ -482,6 +539,67 @@ function newZoomToPoint (pointer, value) {
   ary = matrixProduct(ary, rotateMatrix) // 再旋轉
   canvas.setViewportTransform(ary);
   canvas.renderAll();
+
+  document.getElementById('angle').value = window.theta
+  document.getElementById('myRange').value = window.theta
+  document.getElementById('zoomNum').innerHTML = realZoom()
+}
+
+function newZoomToPoint_1 (pointer, value) {
+  pointer = window.pointer
+  // 補 1. 先以point，反轉theta轉正
+  // var rtheta = -1 * parseInt(window.theta) * Math.PI / 180
+  var rtheta = parseInt(360 - window.theta) * Math.PI / 180
+  var ary = new Array(6)
+  var rotateMatrix = [Math.cos(rtheta), Math.sin(rtheta), -1*Math.sin(rtheta), Math.cos(rtheta), 0, 0]
+  var rotateOrigianlCenter = pointRotate(rotateMatrix, pointer)
+  var centerMoveMatirx = [1,0,0,1, pointer.x - rotateOrigianlCenter.x, pointer.y - rotateOrigianlCenter.y ]
+  ary = canvas.viewportTransform
+  ary = matrixProduct(ary, centerMoveMatirx) // 先平移
+  ary = matrixProduct(ary, rotateMatrix) // 再旋轉
+  canvas.setViewportTransform(ary);
+  // ------------------------------------------------
+  var zoomOrigianlCenter = pointer
+  var zoomOrigianlRate = canvas.viewportTransform[0]
+  // 1. 找出當前座標點，轉回螢幕點的座標
+  var screenPoint = {
+    x: zoomOrigianlCenter.x * zoomOrigianlRate + canvas.viewportTransform[4],
+    y: zoomOrigianlCenter.y * zoomOrigianlRate + canvas.viewportTransform[5]
+  }
+  console.log(zoomOrigianlCenter, screenPoint, value)
+  canvas.zoomToPoint(screenPoint, value);
+  canvas.renderAll();
+  // ------------------------------------------------
+  // 補 2. 轉 theta
+  var rtheta = parseInt(window.theta) * Math.PI / 180
+  var ary = new Array(6)
+  var rotateMatrix = [Math.cos(rtheta), Math.sin(rtheta), -1*Math.sin(rtheta), Math.cos(rtheta), 0, 0]
+  var rotateOrigianlCenter = pointRotate(rotateMatrix, pointer)
+  var centerMoveMatirx = [1,0,0,1, pointer.x - rotateOrigianlCenter.x, pointer.y - rotateOrigianlCenter.y ]
+  ary = canvas.viewportTransform
+  ary = matrixProduct(ary, centerMoveMatirx) // 先平移
+  ary = matrixProduct(ary, rotateMatrix) // 再旋轉
+  canvas.setViewportTransform(ary);
+  canvas.renderAll();
+}
+
+function shiftByViewWidth (w, h, tempCanvasWidth, tempCanvasHeight, rate, zoom) {
+  w = window.viewWidth
+  tempCanvasWidth = window.tempCanvasWidth
+  if (!rate) { rate = 1.5; }
+  if (!h) { h = w }
+  if (!tempCanvasHeight) { tempCanvasHeight = tempCanvasWidth }
+  return (tempCanvasWidth - w) / zoom / 2
+}
+
+function shiftDrawArea (w, h, tempCanvasWidth, tempCanvasHeight, rate) {
+  w = window.viewWidth
+  tempCanvasWidth = window.tempCanvasWidth
+  if (!rate) { rate = 1.5; }
+  if (!h) { h = w }
+  if (!tempCanvasHeight) { tempCanvasHeight = tempCanvasWidth }
+  return (tempCanvasWidth - w) / 2 * -1
+  // return 0
 }
 
 function realZoom () {
@@ -509,10 +627,28 @@ function shift(x, y) {
 function pan (x,y) {
   // canvas.absolutePan({ x: x, y: y })
   // canvas.absolutePan({ x: 0, y: 0 })
-  newZoomToPoint ({ x: 0, y: 0 }, 1)
-  circle(-39,-39,50,'red')
-  circle(-689,-294,50,'green')
-  circle(-400,-200,50,'blue')
+  // newZoomToPoint ({ x: 0, y: 0 }, 1)
+  // circle(50,50,50,'red')
+  // circle(300,300,50,'green')
+  // circle(500,-500,50,'blue')
+  // newZoomToPoint ({ x: 259, y: 162 }, 2.4)
+  rotateSwitch(60)
+  console.log('**************',shiftDrawArea(), realZoom())
+  // rotateSwitch(0)
+  // newZoomToPoint_1('', 3.8)
+  var zoom = realZoom()
+  var levelInfo = window.imgInfo.partition.find(function(item){
+    return item.scaleRate < zoom || item.scaleRate === 1
+  })
+  var area = { x: shiftDrawArea(), y: shiftDrawArea(), w: window.tempCanvasWidth, h: window.tempCanvasWidth}
+  var coordinate = leftTopCoord()
+  if (window.theta !== 0) {
+    var tempAngle = window.theta
+    rotateSwitch(0)
+    coordinate = leftTopCoord()
+    rotateSwitch(tempAngle)
+  }
+  loadImgByLevelAndCanvasArea(levelInfo, coordinate, zoom, area)
 }
 
 function rotateBg(rotateValue){
@@ -526,10 +662,13 @@ function rotateBg(rotateValue){
 function rotateSwitch(rotateValue) {
   // rotateBg(rotateValue)
   // rotate(rotateValue)
-  console.log('before rotate zoom: *',realZoom())
+  document.getElementById('angle').value = rotateValue
+  document.getElementById('myRange').value = rotateValue
+  document.getElementById('zoomNum').innerHTML = realZoom()
+  console.log('before rotate zoom: ',realZoom())
   // rotatePoint(rotateValue, leftTopCoord())
   rotatePoint(rotateValue, CenterCoord())
-  console.log(' after rotate zoom: *',realZoom())
+  console.log(' after rotate zoom: ',realZoom())
 }
 
 function circle (x,y,r, color){
