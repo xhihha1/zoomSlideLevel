@@ -1,0 +1,1 @@
+在 drawTempCanvasByLevel 判斷 ctx.drawImage 的範圍有錯
