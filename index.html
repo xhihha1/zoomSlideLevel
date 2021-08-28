@@ -101,7 +101,7 @@
             <button onclick='rotateSwitch(document.getElementById("angle").value)'>rotate</button>
             <button onclick='shift(5,5)'>shift</button>
             <button onclick='pan(5,5)'>pan</button>
-            <button onclick="console.log(canvas.viewportTransform)">viewportTransform</button>
+            <button onclick="console.log(canvas.viewportTransform);drawMiniMap();">viewportTransform</button>
             <span id="rotateNum"></span>
             <span id="zoomNum" style="color:#F00;"></span>
         </div>
@@ -399,6 +399,20 @@ var currentResolution = 0
             x: 0,
             y: 0
         }, fabric.util.invertTransform(canvas.viewportTransform))
+    }
+    function beforeRotateLeftTopCoord(rotateValue, pointer, transPoint){
+        if (!pointer) {
+            pointer = CenterCoord()
+        }
+        var rtheta = parseInt(360 - rotateValue) * Math.PI / 180
+        var ary = new Array(6)
+        var rotateMatrix = [Math.cos(rtheta), Math.sin(rtheta), -1*Math.sin(rtheta), Math.cos(rtheta), 0, 0]
+        var rotateOrigianlCenter = pointRotate(rotateMatrix, pointer)
+        var centerMoveMatirx = [1,0,0,1, pointer.x - rotateOrigianlCenter.x, pointer.y - rotateOrigianlCenter.y ]
+        ary = canvas.viewportTransform
+        ary = matrixProduct(ary, centerMoveMatirx) // 先平移
+        ary = matrixProduct(ary, rotateMatrix) // 再旋轉
+        return fabric.util.transformPoint(transPoint, fabric.util.invertTransform(ary))
     }
     function rangeXY(){
         // var zoom=canvas.getZoom()

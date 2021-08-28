@@ -148,6 +148,8 @@ function loadImgByLevelAndCanvasArea (levelInfo, coord, zoom, canvasArea){
         w: w,
         h: h
       }
+      canvasArea.x = canvasArea.x
+      canvasArea.y = canvasArea.y
       if (boundaryIntersect(areaB, canvasArea)) {
         if (imgAry[idx]) {
           // 已下載過
@@ -227,9 +229,14 @@ function drawTempCanvasByLevel(levelInfo, coord, zoom, changeView){
         w = window.sliceSize / scaleRate/rate*zoom; // why 2 ?
         h = window.sliceSize / scaleRate/rate*zoom; // why 2 ?
         t = Math.floor(i/column) * window.sliceSize
-        x = ((i%(column)) * window.sliceSize) / scaleRate / rate * zoom + (shiftByViewWidth(0,0,0,0,0,zoom) -1 * coord.x)*zoom
+        x = ((i%(column)) * window.sliceSize) / scaleRate / rate * zoom + (shiftByViewWidth(0,0,0,0,0,zoom) - 1 * coord.x)*zoom
         y = (t)*zoom / scaleRate /rate + (shiftByViewWidth(0,0,0,0,0,zoom) -1 * coord.y)*zoom
-        var area = { x: shiftDrawArea(), y: shiftDrawArea(), w: window.tempCanvasWidth, h: window.tempCanvasWidth}
+        var area = {
+          x: shiftDrawArea(),
+          y: shiftDrawArea(), 
+          w: window.tempCanvasWidth,
+          h: window.tempCanvasWidth
+        }
         // window.area = area
         var areaB = { 
           x: x,
@@ -371,10 +378,13 @@ function drawMiniMap () {
   // ----------------------
   var coordinate = leftTopCoord()
   if (window.theta !== 0) {
-      var tempAngle = window.theta
-      rotateSwitch(0)
-      coordinate = leftTopCoord()
-      rotateSwitch(tempAngle)
+      coordinate = beforeRotateLeftTopCoord(window.theta, CenterCoord(), {
+        x: 0,
+        y: 0
+      })
+      // rotateSwitch(0)
+      // coordinate = leftTopCoord()
+      // rotateSwitch(tempAngle)
   }
   // -----------------------
   ctx.strokeStyle = 'red'
@@ -497,9 +507,9 @@ function rotatePoint(rotateValue, pointer){
       canvas.renderAll();
     // },2000)
     clearTimeout(window.dmini)
-    window.dmini = setTimeout(function(){
+    // window.dmini = setTimeout(function(){
       drawMiniMap()
-    },100)
+    // },100)
   // }
 }
 
