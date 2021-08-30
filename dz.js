@@ -148,8 +148,13 @@ function loadImgByLevelAndCanvasArea (levelInfo, coord, zoom, canvasArea){
         w: w,
         h: h
       }
-      canvasArea.x = canvasArea.x
-      canvasArea.y = canvasArea.y
+      // var area = {
+      //   x: (coord.x + shiftDrawArea()) * zoom,
+      //   y: (coord.y + shiftDrawArea()) * zoom,
+      //   w: window.tempCanvasWidth * zoom,
+      //   h: window.tempCanvasWidth * zoom
+      // }
+      // canvasArea = area
       if (boundaryIntersect(areaB, canvasArea)) {
         if (imgAry[idx]) {
           // 已下載過
@@ -232,8 +237,8 @@ function drawTempCanvasByLevel(levelInfo, coord, zoom, changeView){
         x = ((i%(column)) * window.sliceSize) / scaleRate / rate * zoom + (shiftByViewWidth(0,0,0,0,0,zoom) - 1 * coord.x)*zoom
         y = (t)*zoom / scaleRate /rate + (shiftByViewWidth(0,0,0,0,0,zoom) -1 * coord.y)*zoom
         var area = {
-          x: coord.x + shiftDrawArea(),
-          y: coord.y + shiftDrawArea(), 
+          x: coord.x + shiftDrawArea() * zoom,
+          y: coord.y + shiftDrawArea() * zoom, 
           w: window.tempCanvasWidth * zoom,
           h: window.tempCanvasWidth * zoom
         }
