@@ -232,10 +232,10 @@ function drawTempCanvasByLevel(levelInfo, coord, zoom, changeView){
         x = ((i%(column)) * window.sliceSize) / scaleRate / rate * zoom + (shiftByViewWidth(0,0,0,0,0,zoom) - 1 * coord.x)*zoom
         y = (t)*zoom / scaleRate /rate + (shiftByViewWidth(0,0,0,0,0,zoom) -1 * coord.y)*zoom
         var area = {
-          x: shiftDrawArea(),
-          y: shiftDrawArea(), 
-          w: window.tempCanvasWidth,
-          h: window.tempCanvasWidth
+          x: coord.x + shiftDrawArea(),
+          y: coord.y + shiftDrawArea(), 
+          w: window.tempCanvasWidth * zoom,
+          h: window.tempCanvasWidth * zoom
         }
         // window.area = area
         var areaB = { 
@@ -457,25 +457,9 @@ function rotate(rotateValue){
 }
 
 function rotatePoint(rotateValue, pointer){
-  console.log('----------: ',rotateValue, pointer)
   if (!pointer) {
     pointer = leftTopCoord()
   }
-  console.log('----------: ',rotateValue, pointer)
-  // if(window.theta === 0) {
-  //   window.beforeRotate = canvas.viewportTransform
-  //   window.theta = rotateValue
-  //   var rtheta = parseInt(window.theta) * Math.PI / 180
-  //   var ary = new Array(6)
-  //   var rotateMatrix = [Math.cos(rtheta), Math.sin(rtheta), -1*Math.sin(rtheta), Math.cos(rtheta), 0, 0]
-  //   var rotateOrigianlCenter = pointRotate(rotateMatrix, pointer)
-  //   var centerMoveMatirx = [1,0,0,1, pointer.x - rotateOrigianlCenter.x, pointer.y - rotateOrigianlCenter.y ]
-  //   ary = window.beforeRotate
-  //   ary = matrixProduct(ary, centerMoveMatirx) // 先平移
-  //   ary = matrixProduct(ary, rotateMatrix) // 再旋轉
-  //   canvas.setViewportTransform(ary);
-  //   canvas.renderAll();
-  // } else {
     // 先反轉到 0度
     // var rtheta = -1 * parseInt(window.theta) * Math.PI / 180
     var rtheta = parseInt(360 - window.theta) * Math.PI / 180
@@ -675,10 +659,8 @@ function rotateSwitch(rotateValue) {
   document.getElementById('angle').value = rotateValue
   document.getElementById('myRange').value = rotateValue
   document.getElementById('zoomNum').innerHTML = realZoom()
-  console.log('before rotate zoom: ',realZoom())
   // rotatePoint(rotateValue, leftTopCoord())
   rotatePoint(rotateValue, CenterCoord())
-  console.log(' after rotate zoom: ',realZoom())
 }
 
 function circle (x,y,r, color){
