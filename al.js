@@ -35,6 +35,12 @@ function loadInfo (){
     //   loadImgByLevel (window.imgInfo.partition[i])
     // }
     // var zoom = canvas.getZoom();
+    // 圖移置中
+    const imgAryBaseWidth = window.baselevel.slice_size[0]
+    const rate = Math.ceil(imgAryBaseWidth / canvas.width)
+    const x = (imgAryBaseWidth / rate - canvas.width) / 2
+    canvas.absolutePan({ x: x, y: 0 })
+    // 下載圖片
     var zoom = realZoom();
     var area = { x: shiftDrawArea(), y: shiftDrawArea(), w: window.tempCanvasWidth, h: window.tempCanvasWidth}
     var coordinate = leftTopCoord()
