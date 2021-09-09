@@ -9,6 +9,8 @@ window.theta = 0;
 window.originalCenter = {};
 window.viewWidth = 500
 window.tempCanvasWidth = window.viewWidth * 2.0
+window.imageFilter = true
+// window.duotoneFilter // 紀錄 filter 屬性內容
 
 window.baselevelSelect = true
 
@@ -365,20 +367,50 @@ function renderCanvasByLevel(levelInfo, coord, zoom){
     //   // canvas.backgroundImage.rotate(window.theta);
     //   canvas.renderAll.bind(canvas)
     // }
-    canvas.setBackgroundImage(dataURL, function(){
-      // canvas.renderAll.bind(canvas)
-      // canvas.backgroundImage.rotate(window.theta);
+
+    if(window.imageFilter) {
+      window.duotoneFilter = new fabric.Image.filters.Composed({
+        subFilters: [
+          new fabric.Image.filters.Grayscale({ mode: 'luminosity' }), // make it black and white
+          new fabric.Image.filters.BlendColor({ color: '#00ff36' }), // apply light color
+          new fabric.Image.filters.BlendColor({ color: '#23278a', mode: 'lighten' }), // apply a darker color
+        ]
+      });
+      // 套用 fabric image filter
+      fabric.Image.fromURL(dataURL, function(image) {
+        // globalImage = image;
+        image.filters = [window.duotoneFilter];
+        // image.scaleToWidth(480);
+        image.applyFilters();
+        canvas.setBackgroundImage(image, function(){
+          canvas.renderAll();
+        }, {
+          originX: 'left',
+          originY: 'top',
+          left: coord.x - shiftByViewWidth(0,0,0,0,0,zoom),
+          top: coord.y - shiftByViewWidth(0,0,0,0,0,zoom),
+          scaleX: 1 / zoom,
+          scaleY: 1 / zoom
+        });
+        canvas.renderAll();
+      }, { crossOrigin: 'anonymous' });
+    } else {
+      // 不套用 fabric image filter
+      canvas.setBackgroundImage(dataURL, function(){
+        // canvas.renderAll.bind(canvas)
+        // canvas.backgroundImage.rotate(window.theta);
+        canvas.renderAll();
+      }, {
+        originX: 'left',
+        originY: 'top',
+        // angle: 45, // theta window.theta
+        left: coord.x - shiftByViewWidth(0,0,0,0,0,zoom),
+        top: coord.y - shiftByViewWidth(0,0,0,0,0,zoom),
+        scaleX: 1 / zoom,
+        scaleY: 1 / zoom
+      });
       canvas.renderAll();
-    }, {
-      originX: 'left',
-      originY: 'top',
-      // angle: 45, // theta window.theta
-      left: coord.x - shiftByViewWidth(0,0,0,0,0,zoom),
-      top: coord.y - shiftByViewWidth(0,0,0,0,0,zoom),
-      scaleX: 1 / zoom,
-      scaleY: 1 / zoom
-    });
-    canvas.renderAll();
+    }
     drawMiniMap();
   }
 }
