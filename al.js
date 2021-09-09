@@ -10,6 +10,8 @@ window.originalCenter = {};
 window.viewWidth = 500
 window.tempCanvasWidth = window.viewWidth * 2.0
 
+window.baselevelSelect = true
+
 function loadInfo (){
  
   var oReq = new XMLHttpRequest();
@@ -17,12 +19,20 @@ function loadInfo (){
     console.log('response', JSON.parse(this.response))
     window.imgInfo = JSON.parse(this.response)
     window.imglevel = new Array(window.imgInfo.partition.length)
-    var base = window.imgInfo.partition.find(function(item){
-      return item.count == 1
-    })
-    if(!base) {
+    var base
+    // 選擇基底 base level
+    if (window.baselevelSelect) {
+      base = window.imgInfo.partition.find(function(item){
+        return item.count == 1
+      })
+      if(!base) {
+        base = window.imgInfo.partition[window.imgInfo.partition.length - 1]
+      }
+    } else {
       base = window.imgInfo.partition[window.imgInfo.partition.length - 1]
     }
+    // 基底可以是任何層級
+    // base = window.imgInfo.partition[3]
     window.baselevel = base;
     window.imgInfo.partition.forEach(function(item){
       // if(parseInt(item.level) === 8) {
@@ -36,7 +46,8 @@ function loadInfo (){
     // }
     // var zoom = canvas.getZoom();
     // 圖移置中
-    const imgAryBaseWidth = window.baselevel.slice_size[0]
+    // const imgAryBaseWidth = window.baselevel.slice_size[0]
+    const imgAryBaseWidth = window.baselevel.resolution[0] // tempXXXX
     const rate = Math.ceil(imgAryBaseWidth / canvas.width)
     const x = (imgAryBaseWidth / rate - canvas.width) / 2
     canvas.absolutePan({ x: x, y: 0 })
@@ -122,7 +133,8 @@ function loadImgByLevelAndCanvasArea (levelInfo, coord, zoom, canvasArea){
   const imgBaseInfo = window.imgInfo.partition.find(function (item) {
     return item.level === window.baselevel.level
   })
-  const imgAryBaseWidth = imgBaseInfo.slice_size[0]
+  // const imgAryBaseWidth = imgBaseInfo.slice_size[0]
+  const imgAryBaseWidth = imgBaseInfo.resolution[0] // tempXXX
   // -----------------
   var canvasTemplate
   if (document.getElementById('level_' + level)) {
@@ -235,7 +247,8 @@ function drawTempCanvasByLevel(levelInfo, coord, zoom, changeView){
   canvasTemplate.height = window.tempCanvasWidth
   var imgAry = window.imglevel[parseInt(level)].imgAry
   // var imgAryBaseWidth = window.imglevel[parseInt(window.baselevel.level)].imgAry[0].width
-  var imgAryBaseWidth = window.baselevel.slice_size[0]
+  // var imgAryBaseWidth = window.baselevel.slice_size[0]
+  var imgAryBaseWidth = window.baselevel.resolution[0] // tempXXX
   var ctx = canvasTemplate.getContext("2d");
   for(var i = 0; i < imgAry.length; i++) {
     var t = Math.floor(i/(column)) * window.sliceSize
@@ -413,7 +426,8 @@ function drawMiniMap () {
   // const zoom = canvas.getZoom() ? canvas.getZoom() : 1
   const zoom = realZoom() ? realZoom() : 1
   // var imgAryBaseWidth = window.imglevel[parseInt(window.baselevel.level)].imgAry[0].width
-  var imgAryBaseWidth = window.baselevel.slice_size[0]
+  // var imgAryBaseWidth = window.baselevel.slice_size[0]
+  var imgAryBaseWidth = window.baselevel.resolution[0] // tempXXX
   // const rate = Math.ceil((imgAry[0].width / scaleRate) / canvasMinimap.width)
   // const rate = Math.ceil((imgAryBaseWidth / scaleRate) / canvasMinimap.width)
   const rate = Math.ceil((imgAryBaseWidth / scaleRate) / canvas.width)
@@ -428,14 +442,29 @@ function drawMiniMap () {
   // ctx.rotate(rtheta);
   // ----------------------
   if(window.imglevel[parseInt(level)]){
+    const baseCount = window.baselevel.count
+    const baseColumn = parseInt(window.baselevel.column);
     const imgAry = window.imglevel[parseInt(level)].imgAry
-    ctx.drawImage(
-      imgAry[0],
-      baseX + 0,
-      0,
-      imgAry[0].width / scaleRate / rate / rateCanvas,
-      imgAry[0].height / scaleRate / rate / rateCanvas
-    )
+    for(var i = 0; i < baseCount; i++) {
+      // 支援基底圖形為任意等分割
+      var t = Math.floor(i/baseColumn) * window.sliceSize
+      var x = baseX + ((i%(baseColumn)) * window.sliceSize) / scaleRate / rate / rateCanvas
+      var y = t / scaleRate /rate / rateCanvas
+      ctx.drawImage(
+        imgAry[i],
+        x,
+        y,
+        imgAry[i].width / scaleRate / rate / rateCanvas,
+        imgAry[i].height / scaleRate / rate / rateCanvas
+      )
+      // ctx.drawImage(
+      //   imgAry[0],
+      //   baseX + 0,
+      //   0,
+      //   imgAry[0].width / scaleRate / rate / rateCanvas,
+      //   imgAry[0].height / scaleRate / rate / rateCanvas
+      // )
+    }
   }
   // ----------------------
   // ctx.rotate(rtheta * -1);
@@ -497,7 +526,8 @@ function drawMiniMap () {
   var scaleRateR = levelInfo.scaleRate;
   if (window.imglevel[parseInt(levelR)]) { // 如果可以則繪製參考線
     var imgAry = window.imglevel[parseInt(levelR)].imgAry
-    var imgAryBaseWidth = window.baselevel.slice_size[0]
+    // var imgAryBaseWidth = window.baselevel.slice_size[0]
+    var imgAryBaseWidth = window.baselevel.resolution[0] // tempXXX
     var rateR = Math.ceil(imgAryBaseWidth / window.viewWidth) * rateCanvas;
     for(var i = 0; i < imgAry.length; i++) {
       if (count === 1) {
@@ -821,7 +851,8 @@ function miniMapActive(){
   function pickPoint(e){
     console.log(e)
     console.log(e.offsetX, e.offsetY)
-    var imgAryBaseWidth = window.baselevel.slice_size[0]
+    // var imgAryBaseWidth = window.baselevel.slice_size[0]
+    var imgAryBaseWidth = window.baselevel.resolution[0] // tempXXX
     const rateCanvas = Math.ceil(canvas.width / canvasMinimap.width)
     const scaleRate = 1
     const rate = Math.ceil((imgAryBaseWidth / scaleRate) / canvas.width)
