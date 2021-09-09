@@ -415,7 +415,8 @@ function drawMiniMap () {
   ctx.clearRect(0, 0, canvasMinimap.width, canvasMinimap.height)
   ctx.strokeStyle = '#FF0000'
   ctx.lineWidth = 1
-  
+  // 縮圖置中，添加平移量
+  const baseX = (canvasMinimap.width - imgAryBaseWidth / rate / rateCanvas) / 2
   // ----------------------
   // var rtheta = parseInt(window.theta) * Math.PI / 180
   // ctx.rotate(rtheta);
@@ -424,7 +425,7 @@ function drawMiniMap () {
     const imgAry = window.imglevel[parseInt(level)].imgAry
     ctx.drawImage(
       imgAry[0],
-      0,
+      baseX + 0,
       0,
       imgAry[0].width / scaleRate / rate / rateCanvas,
       imgAry[0].height / scaleRate / rate / rateCanvas
@@ -446,7 +447,7 @@ function drawMiniMap () {
   // -----------------------
   ctx.strokeStyle = 'red'
   ctx.beginPath()
-  var x = coordinate.x / rateCanvas
+  var x = baseX + coordinate.x / rateCanvas
   var y = coordinate.y / rateCanvas
   var w = canvasMinimap.width / rateCanvas / zoom
   var h = canvasMinimap.height / rateCanvas / zoom
@@ -456,7 +457,7 @@ function drawMiniMap () {
   // ------------------------
   ctx.strokeStyle = 'green'
   ctx.beginPath()
-  x = (coordinate.x - shiftByViewWidth(0,0,0,0,0,zoom)) / rateCanvas
+  x = baseX + (coordinate.x - shiftByViewWidth(0,0,0,0,0,zoom)) / rateCanvas
   y = (coordinate.y - shiftByViewWidth(0,0,0,0,0,zoom)) / rateCanvas
   // const w = canvasMinimap.width / zoom
   // const h = canvasMinimap.height / zoom
@@ -473,10 +474,10 @@ function drawMiniMap () {
   var lb = fabric.util.transformPoint({ x: 0, y: canvas.height }, fabric.util.invertTransform(canvas.viewportTransform))
   ctx.strokeStyle = 'blue'
   ctx.beginPath()
-  ctx.moveTo(lt.x / rateCanvas, lt.y / rateCanvas);
-  ctx.lineTo(rt.x / rateCanvas, rt.y / rateCanvas);
-  ctx.lineTo(rb.x / rateCanvas, rb.y / rateCanvas);
-  ctx.lineTo(lb.x / rateCanvas, lb.y / rateCanvas);
+  ctx.moveTo(baseX + lt.x / rateCanvas, lt.y / rateCanvas);
+  ctx.lineTo(baseX + rt.x / rateCanvas, rt.y / rateCanvas);
+  ctx.lineTo(baseX + rb.x / rateCanvas, rb.y / rateCanvas);
+  ctx.lineTo(baseX + lb.x / rateCanvas, lb.y / rateCanvas);
   ctx.closePath();
   ctx.stroke()
   // ----------------------------------
@@ -488,59 +489,60 @@ function drawMiniMap () {
   var count = parseInt(levelInfo.count);
   var column = parseInt(levelInfo.column);
   var scaleRateR = levelInfo.scaleRate;
-  var imgAry = window.imglevel[parseInt(levelR)].imgAry
-  var imgAryBaseWidth = window.baselevel.slice_size[0]
-  var rateR = Math.ceil(imgAryBaseWidth / window.viewWidth) * rateCanvas;
-  for(var i = 0; i < imgAry.length; i++) {
-    if (count === 1) {
-      var w, h, x, y
-      w = imgAry[i].width / scaleRate / rateR;
-      h = imgAry[i].height / scaleRate / rateR;
-      x = 0
-      y = 0
-      ctx.strokeStyle = '#FF44AA'
-      ctx.beginPath()
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + w, y + w);
-      ctx.stroke()
-      ctx.beginPath();
-      ctx.arc(x, y, 5, 0, 2 * Math.PI);
-      ctx.fill()
-    } else {
-      var w = window.sliceSize / scaleRateR / rateR;
-      var h = window.sliceSize / scaleRateR / rateR;
-      var t = Math.floor(i/column) * window.sliceSize
-      var x = ((i%(column)) * window.sliceSize) / scaleRateR / rateR
-      var y = t / scaleRateR /rateR
-      ctx.strokeStyle = '#FF44AA'
-      ctx.beginPath()
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + w, y + w);
-      ctx.stroke()
-      ctx.beginPath();
-      ctx.fillStyle = '#000';
-      ctx.arc(x, y, 5, 0, 2 * Math.PI);
-      ctx.fill()
-      ctx.font = "10px Arial";
-      ctx.fillStyle = '#FFF';
-      ctx.fillText(levelR + '_' + (t / window.sliceSize) + '_' + (i%(column)), x, y + 10);
-      // ctx.fillText(levelR, x, y + 10);
-      console.log(
-        levelR + '_' + (t / window.sliceSize) + '_' + (i%(column))
-        ,boundaryIntersect({
-        x: ((i%(column)) * window.sliceSize) / scaleRateR / rateR, // /rateR = / rate / rateCanvas
-        y: y,
-        w: window.sliceSize / scaleRateR / rateR,
-        h: w
-      }, {
-        x:(coordinate.x - shiftByViewWidth(0,0,0,0,0,zoom)) / rateCanvas,
-        y:(coordinate.y - shiftByViewWidth(0,0,0,0,0,zoom)) / rateCanvas,
-        w:window.tempCanvasWidth / zoom / rateCanvas,
-        h:window.tempCanvasWidth / zoom / rateCanvas
-      }))
+  if (window.imglevel[parseInt(levelR)]) { // 如果可以則繪製參考線
+    var imgAry = window.imglevel[parseInt(levelR)].imgAry
+    var imgAryBaseWidth = window.baselevel.slice_size[0]
+    var rateR = Math.ceil(imgAryBaseWidth / window.viewWidth) * rateCanvas;
+    for(var i = 0; i < imgAry.length; i++) {
+      if (count === 1) {
+        var w, h, x, y
+        w = imgAry[i].width / scaleRate / rateR;
+        h = imgAry[i].height / scaleRate / rateR;
+        x = baseX + 0
+        y = 0
+        ctx.strokeStyle = '#FF44AA'
+        ctx.beginPath()
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + w, y + w);
+        ctx.stroke()
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, 2 * Math.PI);
+        ctx.fill()
+      } else {
+        var w = window.sliceSize / scaleRateR / rateR;
+        var h = window.sliceSize / scaleRateR / rateR;
+        var t = Math.floor(i/column) * window.sliceSize
+        var x = baseX + ((i%(column)) * window.sliceSize) / scaleRateR / rateR
+        var y = t / scaleRateR /rateR
+        ctx.strokeStyle = '#FF44AA'
+        ctx.beginPath()
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + w, y + w);
+        ctx.stroke()
+        ctx.beginPath();
+        ctx.fillStyle = '#000';
+        ctx.arc(x, y, 5, 0, 2 * Math.PI);
+        ctx.fill()
+        ctx.font = "10px Arial";
+        ctx.fillStyle = '#FFF';
+        ctx.fillText(levelR + '_' + (t / window.sliceSize) + '_' + (i%(column)), x, y + 10);
+        // ctx.fillText(levelR, x, y + 10);
+        console.log(
+          levelR + '_' + (t / window.sliceSize) + '_' + (i%(column))
+          ,boundaryIntersect({
+          x: baseX + ((i%(column)) * window.sliceSize) / scaleRateR / rateR, // /rateR = / rate / rateCanvas
+          y: y,
+          w: window.sliceSize / scaleRateR / rateR,
+          h: w
+        }, {
+          x:baseX + (coordinate.x - shiftByViewWidth(0,0,0,0,0,zoom)) / rateCanvas,
+          y:(coordinate.y - shiftByViewWidth(0,0,0,0,0,zoom)) / rateCanvas,
+          w:window.tempCanvasWidth / zoom / rateCanvas,
+          h:window.tempCanvasWidth / zoom / rateCanvas
+        }))
+      }
     }
   }
-
 }
 
 
@@ -789,8 +791,8 @@ function circle (x,y,r, color){
     strokeWidth: 14,
     fill: color,
     stroke: color,
-    originX: 'left',
-    originY: 'top',
+    originX: 'center',
+    originY: 'center',
     top: y,
     left: x,
     rx: r,
@@ -803,3 +805,170 @@ function circle (x,y,r, color){
   canvas.add(ellipse)
 }
 // loadInfo()
+
+
+function miniMapActive(){
+  const canvasMinimap = document.getElementById('minimapCanvas')
+  canvasMinimap.addEventListener('mousedown', pickPoint, false);
+  // canvasMinimap.addEventListener('mousemove', drawing,   false);
+  // canvasMinimap.addEventListener('mouseup',   stopDrawing, false);
+  function pickPoint(e){
+    console.log(e)
+    console.log(e.offsetX, e.offsetY)
+    var imgAryBaseWidth = window.baselevel.slice_size[0]
+    const rateCanvas = Math.ceil(canvas.width / canvasMinimap.width)
+    const scaleRate = 1
+    const rate = Math.ceil((imgAryBaseWidth / scaleRate) / canvas.width)
+    // 縮圖置中，添加平移量
+    const baseX = (canvasMinimap.width - imgAryBaseWidth / rate / rateCanvas) / 2
+    var x = (e.offsetX - baseX) * rateCanvas
+    var y = e.offsetY * rateCanvas
+    // var pointer = canvas.getPointer({ x: 0, y: 0 });
+    // var pointer = beforeRotateLeftTopCoord(window.theta, CenterCoord(), { x: 0, y: 0 })
+    var pointer = CenterCoord()
+    var ary = new Array(6)
+    var ary = canvas.viewportTransform;
+    var centerMoveMatirx = [1, 0, 0, 1, pointer.x - x, pointer.y - y]
+    // console.log('--A--', JSON.stringify(ary))
+    // var centerMoveMatirx = [1,0,0,1,10,10]
+    ary = matrixProduct(ary, centerMoveMatirx) // 先平移
+    // console.log('--B--', JSON.stringify(ary))
+    canvas.setViewportTransform(ary);
+    canvas.renderAll();
+    clearTimeout(tt)
+    tt = setTimeout(function(){
+      var zoom = realZoom()
+      var levelInfo = window.imgInfo.partition.find(function(item){
+        return item.scaleRate < zoom || item.scaleRate === 1
+      })
+      var area = { x: shiftDrawArea(), y: shiftDrawArea(), w: window.tempCanvasWidth, h: window.tempCanvasWidth}
+      var coordinate = leftTopCoord()
+      if (window.theta !== 0) {
+          var tempAngle = window.theta
+          rotateSwitch(0)
+          coordinate = leftTopCoord()
+          rotateSwitch(tempAngle)
+      }
+      loadImgByLevelAndCanvasArea(levelInfo, coordinate, zoom, area)
+    })
+  }
+}
+
+function selectViewEnd () {
+  if (document.getElementById('selectView')) {
+    var elem = document.getElementById("selectView");
+    elem.parentNode.removeChild(elem);
+  }
+}
+
+function selectView () {
+  var canvasSelectTemplate
+  if (document.getElementById('selectView')) {
+    canvasSelectTemplate = document.getElementById('selectView')
+  } else {
+    canvasSelectTemplate = document.createElement('canvas')
+    canvasSelectTemplate.id = 'selectView'
+    canvasSelectTemplate.width = canvas.width
+    canvasSelectTemplate.height = canvas.height
+    canvasSelectTemplate.style = 'position:absolute;top:0px;left:0px;z-index:50;background:rgba(255,0,0,0.3);'
+    document.getElementById('resultDiv').appendChild(canvasSelectTemplate)
+  }
+  var oX, endX, oXo, endXo
+  var oY, endY, oYo, endYo
+  var oW, oH, oWo, oHo
+  var ctx = canvasSelectTemplate.getContext("2d");
+  var startDrawing = false
+  var startDraw = function (e) {
+    const canvasMinimap = document.getElementById('minimapCanvas')
+    const rateCanvas = Math.ceil(canvas.width / canvasMinimap.width)
+    if(!startDrawing){
+      oX = e.offsetX
+      oY = e.offsetY
+      startDrawing = true
+      var o = fabric.util.transformPoint({
+        x: oX,
+        y: oY
+      }, fabric.util.invertTransform(canvas.viewportTransform))
+      oXo = o.x
+      oYo = o.y
+      // circle (oXo,oYo, 3, 'deepskyblue')
+    } else {
+      startDrawing = false
+      ctx.clearRect(0, 0, canvasSelectTemplate.width, canvasSelectTemplate.height)
+      ctx.strokeStyle = '#FFFF00'
+      ctx.lineWidth = 1
+      ctx.beginPath()
+      ctx.rect(Math.min(oX, endX), Math.min(oY, endY), Math.abs(endX - oX), Math.abs(endY - oY))
+      ctx.stroke()
+      var o = fabric.util.transformPoint({
+        x: endX,
+        y: endY
+      }, fabric.util.invertTransform(canvas.viewportTransform))
+      endXo = o.x
+      endYo = o.y
+      // circle (endXo, endYo, 3, 'brown')
+      var ary = new Array(6)
+      var ary = canvas.viewportTransform;
+      var pointer = CenterCoord()
+      var center = { x: (oXo + endXo) / 2, y: (oYo + endYo) / 2 }
+      // circle (center.x, center.y, 3, 'fuchsia')
+      var centerMoveMatirx = [1, 0, 0, 1, pointer.x - center.x, pointer.y - center.y]
+      ary = matrixProduct(ary, centerMoveMatirx) // 先平移
+      // var rtheta = parseInt(360 - window.theta) * Math.PI / 180
+      // var rotateMatrix = [Math.cos(rtheta), Math.sin(rtheta), -1*Math.sin(rtheta), Math.cos(rtheta), 0, 0]
+      // ary = matrixProduct(ary, rotateMatrix) // 先反旋轉
+      // var rotateValue = window.theta
+      // rotateSwitch(rtheta)
+      // ary = matrixProduct(ary, centerMoveMatirx) // 先平移
+      canvas.setViewportTransform(ary);
+      // var rtheta = parseInt(window.theta) * Math.PI / 180
+      var rtheta = parseInt(360 - window.theta) * Math.PI / 180
+      var rotateValue = window.theta
+      rotateSwitch(0)
+      var zoom = realZoom()
+      // zoom = 5
+      var zoomRateW = canvas.width / oW
+      var zoomRateH = canvas.height / oH
+      var zoomRate = Math.min(zoomRateW, zoomRateH)
+      newZoomToPoint(CenterCoord(), zoom * zoomRate)
+      rotateSwitch(rotateValue)
+      canvas.renderAll();
+      clearTimeout(tt)
+      tt = setTimeout(function(){
+        var zoom = realZoom()
+        var levelInfo = window.imgInfo.partition.find(function(item){
+          return item.scaleRate < zoom || item.scaleRate === 1
+        })
+        var area = { x: shiftDrawArea(), y: shiftDrawArea(), w: window.tempCanvasWidth, h: window.tempCanvasWidth}
+        var coordinate = leftTopCoord()
+        if (window.theta !== 0) {
+            var tempAngle = window.theta
+            rotateSwitch(0)
+            coordinate = leftTopCoord()
+            rotateSwitch(tempAngle)
+        }
+        loadImgByLevelAndCanvasArea(levelInfo, coordinate, zoom, area)
+      }, 100)
+      selectViewEnd()
+    }
+  }
+  var drawing = function (e) {
+    if(startDrawing) {
+      endX = e.offsetX
+      endY = e.offsetY
+      ctx.clearRect(0, 0, canvasSelectTemplate.width, canvasSelectTemplate.height)
+      ctx.strokeStyle = '#FFFF00'
+      ctx.lineWidth = 1
+      oW = Math.abs(endX - oX)
+      oH = Math.abs(endY - oY)
+      ctx.beginPath()
+      ctx.rect(Math.min(oX, endX), Math.min(oY, endY), Math.abs(endX - oX), Math.abs(endY - oY))
+      ctx.stroke()
+    }
+  }
+  var stopDrawing = function (e) {}
+
+  canvasSelectTemplate.addEventListener('mousedown', startDraw, false);
+  canvasSelectTemplate.addEventListener('mousemove', drawing,   false);
+  canvasSelectTemplate.addEventListener('mouseup',   stopDrawing, false);
+}

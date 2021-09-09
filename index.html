@@ -101,6 +101,8 @@
             <button onclick='rotateSwitch(document.getElementById("angle").value)'>rotate</button>
             <button onclick='shift(5,5)'>shift</button>
             <button onclick='pan(5,5)'>pan</button>
+            <button onclick='selectView()'>select View</button>
+            <button onclick='selectViewEnd()'>select View End</button>
             <button onclick="console.log(canvas.viewportTransform);drawMiniMap();">viewportTransform</button>
             <span id="rotateNum"></span>
             <span id="zoomNum" style="color:#F00;"></span>
@@ -407,6 +409,7 @@ var currentResolution = 0
 
     initCanvas()
     loadInfo()
+    miniMapActive()
 
     var slider = document.getElementById("myRange");
     var myAngle = document.getElementById("angle");
