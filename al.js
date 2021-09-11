@@ -369,13 +369,15 @@ function renderCanvasByLevel(levelInfo, coord, zoom){
     // }
 
     if(window.imageFilter) {
-      window.duotoneFilter = new fabric.Image.filters.Composed({
-        subFilters: [
-          new fabric.Image.filters.Grayscale({ mode: 'luminosity' }), // make it black and white
-          new fabric.Image.filters.BlendColor({ color: '#00ff36' }), // apply light color
-          new fabric.Image.filters.BlendColor({ color: '#23278a', mode: 'lighten' }), // apply a darker color
-        ]
-      });
+      if (!window.duotoneFilter) {
+        window.duotoneFilter = new fabric.Image.filters.Composed({
+          subFilters: [
+            new fabric.Image.filters.Grayscale({ mode: 'luminosity' }), // make it black and white
+            new fabric.Image.filters.BlendColor({ color: '#00ff36' }), // apply light color
+            new fabric.Image.filters.BlendColor({ color: '#23278a', mode: 'lighten' }), // apply a darker color
+          ]
+        });
+      }
       // 套用 fabric image filter
       fabric.Image.fromURL(dataURL, function(image) {
         // globalImage = image;
@@ -1041,3 +1043,67 @@ function selectView () {
   canvasSelectTemplate.addEventListener('mousemove', drawing,   false);
   canvasSelectTemplate.addEventListener('mouseup',   stopDrawing, false);
 }
+
+// 要搭配 hiEditor labelme 格式
+// function drawMinimapLabel (ctx) {
+//   const that = this
+//   const canvasMinimap = document.getElementById('minimapCanvas')
+//   const canvas = edit.canvasView
+//   const scaleRate = 1
+//   const imgAryBaseWidth = that.ndpi.baselevel.resolution[0]
+//   const rate = Math.ceil((imgAryBaseWidth / scaleRate) / canvas.width)
+//   const rateCanvas = Math.ceil(canvas.width / canvasMinimap.width)
+//   ctx.strokeStyle = '#FF0000'
+//   ctx.lineWidth = 2
+//   // 縮圖置中，添加平移量
+//   const baseX = (canvasMinimap.width - imgAryBaseWidth / rate / rateCanvas) / 2
+//   if (!this.exportJSON(this.currentAssetId)) {
+//     return false
+//   }
+//   const annotationLabelme = JSON.parse(this.exportJSON(this.currentAssetId))
+//   var rateR = rateCanvas
+//   for (var i = 0; i < annotationLabelme.shapes.length; i++) {
+//     const item = annotationLabelme.shapes[i]
+//     var x, y, j, x1, y1, x2, y2, r
+//     if (item.shape_type === 'polygon') {
+//       ctx.strokeStyle = item.stroke
+//       ctx.fillStyle = edit.colorToRgbA(item.stroke, 0.2)
+//       ctx.beginPath()
+//       for (j = 0; j < item.points.length; j++) {
+//         x = baseX + item.points[j][0] / scaleRate / rateR
+//         y = item.points[j][1] / scaleRate / rateR
+//         if (j === 0) {
+//           ctx.moveTo(x, y)
+//         } else {
+//           ctx.lineTo(x, y)
+//         }
+//       }
+//       ctx.closePath()
+//       ctx.fill()
+//       ctx.stroke()
+//     } else if (item.shape_type === 'circle') {
+//       ctx.strokeStyle = item.stroke
+//       ctx.fillStyle = edit.colorToRgbA(item.stroke, 0.2)
+//       ctx.beginPath()
+//       x1 = baseX + item.points[0][0] / scaleRate / rateR
+//       y1 = item.points[0][1] / scaleRate / rateR
+//       x2 = baseX + item.points[1][0] / scaleRate / rateR
+//       y2 = item.points[1][1] / scaleRate / rateR
+//       r = Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2))
+//       ctx.arc(x1, y1, r, 0, 2 * Math.PI)
+//       ctx.fill()
+//       ctx.stroke()
+//     } else if (item.shape_type === 'rectangle') {
+//       ctx.strokeStyle = item.stroke
+//       ctx.fillStyle = edit.colorToRgbA(item.stroke, 0.2)
+//       x1 = baseX + item.points[0][0] / scaleRate / rateR
+//       y1 = item.points[0][1] / scaleRate / rateR
+//       x2 = baseX + item.points[1][0] / scaleRate / rateR
+//       y2 = item.points[1][1] / scaleRate / rateR
+//       ctx.beginPath()
+//       ctx.rect(x1, y1, Math.abs(x1 - x2), Math.abs(y1 - y2))
+//       ctx.fill()
+//       ctx.stroke()
+//     }
+//   }
+// }
